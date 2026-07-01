@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ICD 10</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232563eb'/%3E%3Crect x='28' y='14' width='8' height='36' rx='3' fill='white'/%3E%3Crect x='14' y='28' width='36' height='8' rx='3' fill='white'/%3E%3C/svg%3E">
+<title>ICD 10 BY DHA</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230066FF'/%3E%3Crect x='28' y='14' width='8' height='36' rx='3' fill='white'/%3E%3Crect x='14' y='28' width='36' height='8' rx='3' fill='white'/%3E%3C/svg%3E">
 <style>
   :root {
     --blue: #2563eb;
@@ -216,7 +216,7 @@
 <div class="wrap">
   <div class="panel">
     <h1>Tra cứu ICD-10 (Hoàng Anh Jupiter)</h1>
-    <div class="sub">Nhập mã hoặc tên bệnh để tìm nhanh (offline)</div>
+    <div class="sub"></div>
     <div class="search-row">
       <span class="icon">⌕</span>
       <input id="searchInput" placeholder="Tìm mã ICD hoặc tên bệnh: A09, E11.9, tăng huyết áp..." autocomplete="off" spellcheck="false">
@@ -245,8 +245,7 @@
       '⚠ Chưa có dữ liệu. Hãy dùng script "extract-icd-data.js" để trích xuất dữ liệu từ trang gốc, ' +
       'lưu thành file "icd-data.js" và đặt cùng thư mục với file HTML này.';
   } else {
-    dataStatusEl.className = 'ok';
-    dataStatusEl.textContent = '✓ Đã tải ' + DATA.length.toLocaleString('vi-VN') + ' mã ICD-10 (offline, không cần mạng).';
+    dataStatusEl.style.display = 'none';
   }
 
   // Chuẩn hoá chuỗi tiếng Việt để tìm kiếm không dấu
