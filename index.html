@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ICD 10</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232563eb'/%3E%3Crect x='28' y='14' width='8' height='36' rx='3' fill='white'/%3E%3Crect x='14' y='28' width='36' height='8' rx='3' fill='white'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --blue: #2563eb;
+    --blue-light: #eff6ff;
+    --green: #16a34a;
+    --green-light: #f0fdf4;
+    --amber: #d97706;
+    --amber-light: #fffbeb;
+    --border: #e2e8f0;
+    --text: #0f172a;
+    --muted: #64748b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #f8fafc;
+    color: var(--text);
+  }
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 16px;
+  }
+  .panel {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  }
+  .panel h1 {
+    font-size: 16px;
+    margin: 0 0 2px;
+  }
+  .panel .sub {
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .search-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 12px;
+  }
+  .search-row:focus-within {
+    border-color: var(--blue);
+  }
+  .search-row span.icon { color: var(--muted); }
+  .search-row input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 15px;
+    font-family: inherit;
+  }
+  .search-row button.clear {
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 16px;
+    padding: 2px 6px;
+  }
+  #status {
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+  #dataStatus {
+    font-size: 12.5px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+  }
+  #dataStatus.ok { background: var(--green-light); color: var(--green); }
+  #dataStatus.warn { background: var(--amber-light); color: var(--amber); }
+
+  .results { display: flex; flex-direction: column; gap: 10px; }
+
+  .card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+  }
+
+  /* --- Mã nhóm: chỉ hiện khối gợi ý --- */
+  .children-block summary {
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13.5px;
+    color: var(--blue);
+    list-style: none;
+  }
+  .children-block summary::-webkit-details-marker { display: none; }
+  .children-block summary::before {
+    content: "▾ ";
+  }
+  .child-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .child-btn {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    text-align: left;
+    border: 1px solid var(--green);
+    background: var(--green-light);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 7px 10px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13.5px;
+  }
+  .child-btn code {
+    font-weight: 700;
+    color: var(--green);
+    white-space: nowrap;
+  }
+
+  /* --- Mã cụ thể (mã lá) --- */
+  .card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+  .code {
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--blue);
+    background: var(--blue-light);
+    padding: 2px 8px;
+    border-radius: 6px;
+  }
+  .copy-btn {
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 12px;
+    cursor: pointer;
+    color: var(--muted);
+  }
+  .copy-btn:hover { background: #f1f5f9; }
+  .name { font-weight: 600; font-size: 14.5px; margin: 4px 0 2px; }
+  .en { font-style: italic; color: var(--muted); font-size: 12.5px; margin-bottom: 6px; }
+  .banner {
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 12.5px;
+    margin-bottom: 6px;
+  }
+  .banner b { display: block; font-size: 13px; margin-bottom: 2px; }
+  .banner.ok { background: var(--green-light); color: var(--green); }
+  .banner.warn { background: var(--amber-light); color: var(--amber); }
+  .banner.default { background: #f1f5f9; color: var(--muted); }
+  .meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .meta span {
+    font-size: 11.5px;
+    background: #f1f5f9;
+    color: var(--muted);
+    padding: 2px 7px;
+    border-radius: 999px;
+  }
+  .note {
+    margin-top: 8px;
+    font-size: 12.5px;
+    color: var(--muted);
+    white-space: pre-line;
+    border-top: 1px dashed var(--border);
+    padding-top: 6px;
+  }
+
+  .empty {
+    text-align: center;
+    color: var(--muted);
+    padding: 40px 0;
+    font-size: 13.5px;
+  }
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--text);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s ease;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="panel">
+    <h1>Tra cứu ICD-10 (Hoàng Anh Jupiter)</h1>
+    <div class="sub">Nhập mã hoặc tên bệnh để tìm nhanh (offline)</div>
+    <div class="search-row">
+      <span class="icon">⌕</span>
+      <input id="searchInput" placeholder="Tìm mã ICD hoặc tên bệnh: A09, E11.9, tăng huyết áp..." autocomplete="off" spellcheck="false">
+      <button class="clear" id="clearBtn" title="Xoá">✕</button>
+    </div>
+    <div id="status"></div>
+  </div>
+
+  <div id="dataStatus"></div>
+
+  <div class="results" id="results"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Dữ liệu ICD-10 (xuất ra từ script extract-icd-data.js) -->
+<script src="icd-data.js"></script>
+<script>
+(function () {
+  const DATA = (window.ICD_DATA || []);
+
+  const dataStatusEl = document.getElementById('dataStatus');
+  if (DATA.length === 0) {
+    dataStatusEl.className = 'warn';
+    dataStatusEl.textContent =
+      '⚠ Chưa có dữ liệu. Hãy dùng script "extract-icd-data.js" để trích xuất dữ liệu từ trang gốc, ' +
+      'lưu thành file "icd-data.js" và đặt cùng thư mục với file HTML này.';
+  } else {
+    dataStatusEl.className = 'ok';
+    dataStatusEl.textContent = '✓ Đã tải ' + DATA.length.toLocaleString('vi-VN') + ' mã ICD-10 (offline, không cần mạng).';
+  }
+
+  // Chuẩn hoá chuỗi tiếng Việt để tìm kiếm không dấu
+  function normalize(str) {
+    return (str || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd');
+  }
+
+  // Tiền xử lý: tạo trường tìm kiếm chuẩn hoá 1 lần cho hiệu năng
+  const searchIndex = DATA.map((item) => ({
+    item,
+    codeNorm: normalize(item.code),
+    nameNorm: normalize(item.name),
+    enNorm: normalize(item.en),
+  }));
+
+  const input = document.getElementById('searchInput');
+  const clearBtn = document.getElementById('clearBtn');
+  const resultsEl = document.getElementById('results');
+  const statusEl = document.getElementById('status');
+  const toastEl = document.getElementById('toast');
+
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    setTimeout(() => toastEl.classList.remove('show'), 1200);
+  }
+
+  function copyText(text) {
+    navigator.clipboard?.writeText(text).then(() => showToast('Đã copy: ' + text));
+  }
+
+  function renderCard(item) {
+    const hasChildren = item.children && item.children.length > 0;
+
+    if (hasChildren) {
+      // Mã nhóm -> chỉ hiện khối gợi ý mã cụ thể hơn
+      const childrenHtml = item.children
+        .map(
+          (c) =>
+            `<button class="child-btn" data-code="${escapeAttr(c.code)}">
+               <code>${escapeHtml(c.code)}</code>
+               <span>${escapeHtml(c.name)}</span>
+             </button>`
+        )
+        .join('');
+      return `
+        <div class="card">
+          <details class="children-block" open>
+            <summary>Gợi ý mã cụ thể hơn có thể dùng làm bệnh chính (${item.children.length})</summary>
+            <div class="child-list">${childrenHtml}</div>
+          </details>
+        </div>`;
+    }
+
+    // Mã cụ thể (mã lá) -> hiện đầy đủ
+    const bannerClass =
+      item.status === 'ok' ? 'ok' : item.status === 'warn' ? 'warn' : 'default';
+    const bannerHtml = item.statusTitle
+      ? `<div class="banner ${bannerClass}"><b>${escapeHtml(item.statusTitle)}</b>${
+          item.statusDesc ? '<span>' + escapeHtml(item.statusDesc) + '</span>' : ''
+        }</div>`
+      : '';
+    const metaHtml = (item.meta || [])
+      .map((m) => `<span>${escapeHtml(m)}</span>`)
+      .join('');
+    const noteHtml = item.note ? `<div class="note">${item.note}</div>` : '';
+
+    return `
+      <div class="card">
+        <div class="card-top">
+          <span class="code">${escapeHtml(item.code)}</span>
+          <button class="copy-btn" data-copy="${escapeAttr(item.code)}">Copy mã</button>
+        </div>
+        <div class="name">${escapeHtml(item.name)}</div>
+        ${item.en ? `<div class="en">${escapeHtml(item.en)}</div>` : ''}
+        ${bannerHtml}
+        <div class="meta">${metaHtml}</div>
+        ${noteHtml}
+      </div>`;
+  }
+
+  function escapeHtml(str) {
+    return (str || '').replace(/[&<>"']/g, (c) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    }[c]));
+  }
+  function escapeAttr(str) { return escapeHtml(str); }
+
+  function doSearch(query) {
+    const q = normalize(query.trim());
+    if (!q) {
+      resultsEl.innerHTML = '';
+      statusEl.textContent = '';
+      return;
+    }
+
+    const matches = searchIndex.filter(
+      (row) =>
+        row.codeNorm.includes(q) || row.nameNorm.includes(q) || row.enNorm.includes(q)
+    );
+
+    statusEl.textContent = `Tìm thấy ${matches.length.toLocaleString('vi-VN')} kết quả cho "${query}"`;
+
+    if (matches.length === 0) {
+      resultsEl.innerHTML = '<div class="empty">Không tìm thấy mã hoặc bệnh phù hợp.</div>';
+      return;
+    }
+
+    // Giới hạn hiển thị để không lag khi query quá ngắn / trùng nhiều
+    const MAX_SHOW = 200;
+    const shown = matches.slice(0, MAX_SHOW);
+    resultsEl.innerHTML = shown.map((row) => renderCard(row.item)).join('');
+    if (matches.length > MAX_SHOW) {
+      resultsEl.insertAdjacentHTML(
+        'beforeend',
+        `<div class="empty">Chỉ hiển thị ${MAX_SHOW} / ${matches.length} kết quả đầu tiên. Hãy nhập cụ thể hơn.</div>`
+      );
+    }
+  }
+
+  input.addEventListener('input', () => doSearch(input.value));
+  clearBtn.addEventListener('click', () => {
+    input.value = '';
+    doSearch('');
+    input.focus();
+  });
+
+  // Click vào mã con gợi ý -> tìm luôn mã đó
+  resultsEl.addEventListener('click', (e) => {
+    const childBtn = e.target.closest('.child-btn');
+    if (childBtn) {
+      const code = childBtn.dataset.code;
+      input.value = code;
+      doSearch(code);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    const copyBtn = e.target.closest('.copy-btn');
+    if (copyBtn) {
+      copyText(copyBtn.dataset.copy);
+    }
+  });
+
+  // Phím tắt "/" để focus ô tìm kiếm
+  document.addEventListener('keydown', (e) => {
+    if (e.key === '/' && document.activeElement !== input) {
+      e.preventDefault();
+      input.focus();
+    }
+  });
+
+  input.focus();
+})();
+</script>
+
+</body>
+</html>
