@@ -209,6 +209,36 @@
     transition: opacity .2s ease;
   }
   .toast.show { opacity: 1; }
+
+  #backToTop {
+    position: fixed;
+    right: 18px;
+    bottom: 24px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    background: var(--blue);
+    color: #fff;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(37,99,235,0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: opacity .2s ease, transform .2s ease;
+    z-index: 999;
+  }
+  #backToTop.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+  #backToTop:hover { background: #1d4ed8; }
 </style>
 </head>
 <body>
@@ -231,6 +261,8 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<button id="backToTop" title="Lên đầu trang" aria-label="Lên đầu trang">↑</button>
 
 <!-- Dữ liệu ICD-10 (xuất ra từ script extract-icd-data.js) -->
 <script src="icd-data.js"></script>
@@ -402,6 +434,21 @@
   });
 
   input.focus();
+
+  // Nút cuộn lên đầu trang
+  const backToTopBtn = document.getElementById('backToTop');
+  function toggleBackToTop() {
+    if (window.scrollY > 300) {
+      backToTopBtn.classList.add('show');
+    } else {
+      backToTopBtn.classList.remove('show');
+    }
+  }
+  window.addEventListener('scroll', toggleBackToTop, { passive: true });
+  toggleBackToTop();
+  backToTopBtn.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
 })();
 </script>
 
