@@ -853,24 +853,27 @@
   const activeTracks = {}; // id -> {stop, btn, setVolume}
   const rowRefs = {}; // id -> {btn, vol}
 
+  function updateMainButton() {
+    const anyPlaying = Object.keys(activeTracks).length > 0;
+    mainPlayBtn.textContent = anyPlaying ? '⏸' : '▶';
+    mainPlayBtn.classList.toggle('playing', anyPlaying);
+  }
+
   function setBtnPlaying(id, playing) {
     const ref = rowRefs[id];
     if (ref) {
       ref.btn.textContent = playing ? '⏹' : '▶';
       ref.btn.classList.toggle('playing', playing);
     }
-    if (id === 'tru-tinh') {
-      mainPlayBtn.textContent = playing ? '⏸' : '▶';
-      mainPlayBtn.classList.toggle('playing', playing);
-    }
+    updateMainButton();
   }
 
   function stopTrack(id) {
     const t = activeTracks[id];
     if (!t) return;
     t.stop();
-    setBtnPlaying(id, false);
     delete activeTracks[id];
+    setBtnPlaying(id, false);
   }
 
   function stopAllExcept(exceptId) {
@@ -911,11 +914,11 @@
       showToast('Không phát được kênh ' + ch.name);
       stopTrack(ch.id);
     });
-    setBtnPlaying(ch.id, true);
     activeTracks[ch.id] = {
       stop: () => { entry.audioEl.pause(); },
       setVolume: (v) => { entry.audioEl.volume = v; },
     };
+    setBtnPlaying(ch.id, true);
   }
 
   CHANNELS.forEach((ch) => {
@@ -939,8 +942,9 @@
 
   // Nút Play chính -> phát/dừng kênh Trữ Tình mặc định
   mainPlayBtn.addEventListener('click', () => {
-    if (activeTracks['tru-tinh']) {
-      stopTrack('tru-tinh');
+    const activeIds = Object.keys(activeTracks);
+    if (activeIds.length > 0) {
+      activeIds.forEach(stopTrack);
     } else {
       const ch = CHANNELS.find((c) => c.id === 'tru-tinh');
       const ref = rowRefs['tru-tinh'];
