@@ -256,26 +256,15 @@
     box-shadow: 0 2px 10px rgba(0,0,0,0.08);
     font-size: 12px;
   }
-  .radio-widget .radio-icon { font-size: 13px; }
   .radio-widget .radio-title {
     font-weight: 700;
     font-size: 12px;
     color: var(--blue);
     white-space: nowrap;
   }
-  .radio-widget select {
-    border: none;
-    background: transparent;
-    font-size: 12px;
-    font-family: inherit;
-    color: var(--text);
-    outline: none;
-    max-width: 80px;
-    cursor: pointer;
-  }
   .radio-widget button.radio-toggle {
     border: none;
-    background: var(--blue);
+    background: var(--muted);
     color: #fff;
     width: 24px;
     height: 24px;
@@ -288,14 +277,20 @@
     flex-shrink: 0;
     line-height: 1;
   }
+  .radio-widget button.radio-toggle:hover { background: #475569; }
   .radio-widget button.radio-toggle.playing { background: var(--green); }
-  .radio-widget button.radio-toggle.stop-btn { background: var(--muted); }
-  .radio-widget button.radio-toggle.stop-btn:hover { background: #475569; }
-  @media (max-width: 420px) {
-    .radio-widget { top: 6px; right: 6px; padding: 4px 6px 4px 8px; gap: 4px; }
-    .radio-widget select { max-width: 54px; }
-    .radio-widget .radio-title { display: none; }
+  .radio-widget button.radio-toggle.playing:hover { background: #15803d; }
+  .radio-widget .mixer-toggle {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
   }
+  .radio-widget .mixer-toggle input { cursor: pointer; }
   .radio-widget button.expand-btn {
     border: 1px solid #94a3b8;
     background: #fff;
@@ -314,33 +309,74 @@
   }
   .radio-widget button.expand-btn:hover { background: #f1f5f9; border-color: #64748b; }
   .radio-widget button.expand-btn.open { background: var(--blue); color: #fff; border-color: var(--blue); }
+  @media (max-width: 480px) {
+    .radio-widget { top: 6px; right: 6px; padding: 4px 6px 4px 8px; gap: 4px; }
+    .radio-widget .radio-title { display: none; }
+    .radio-widget .mixer-toggle span.label { display: none; }
+  }
 
-  .radio-history {
+  .radio-mixer {
     position: fixed;
     top: 52px;
     right: 10px;
-    width: 300px;
+    width: 320px;
     max-width: calc(100vw - 20px);
+    max-height: 70vh;
+    overflow-y: auto;
     background: #fff;
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: 12px;
     box-shadow: 0 6px 18px rgba(0,0,0,0.12);
     z-index: 999;
-    overflow: hidden;
     display: none;
+    padding: 8px;
   }
-  .radio-history.show { display: block; }
-  .radio-history .rh-title {
-    font-size: 11.5px;
+  .radio-mixer.show { display: block; }
+  .radio-mixer .rm-group-title {
+    font-size: 10.5px;
     font-weight: 700;
     color: var(--muted);
-    padding: 8px 10px 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding: 8px 6px 4px;
   }
-  .radio-history iframe {
-    width: 100%;
-    min-height: 300px;
-    border: 0;
-    display: block;
+  .track-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px;
+    border-radius: 8px;
+  }
+  .track-row:hover { background: #f8fafc; }
+  .track-row .track-name {
+    flex: 1;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .track-row button.track-btn {
+    border: none;
+    background: var(--blue);
+    color: #fff;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+  .track-row button.track-btn.playing { background: var(--green); }
+  .track-row input.track-volume {
+    width: 72px;
+    accent-color: var(--blue);
+    flex-shrink: 0;
   }
 </style>
 </head>
@@ -348,20 +384,283 @@
 
 <div class="radio-widget" id="radioWidget">
   <span class="radio-title">🎵 24/7</span>
-  <select id="radioChannel" title="Chọn kênh">
-    <option value="https://cherryradio.com.au/stream/tin-tuc.mp3">Tin tức</option>
-    <option value="https://cherryradio.com.au/stream/tru-tinh.mp3">Trữ Tình</option>
-  </select>
-  <button class="radio-toggle" id="radioToggle" title="Phát / Tạm dừng">▶</button>
-  <button class="radio-toggle stop-btn" id="radioStop" title="Dừng hẳn">⏹</button>
-  <button class="expand-btn" id="radioExpandBtn" title="Mở rộng danh sách bài hát">▼</button>
-  <audio id="radioAudio" preload="none"></audio>
+  <button class="radio-toggle" id="radioPlayMain" title="Phát Trữ Tình">▶</button>
+  <button class="radio-toggle" id="radioStopAll" title="Dừng tất cả">⏹</button>
+  <button class="expand-btn" id="radioExpandBtn" title="Mở danh sách âm thanh">▼</button>
 </div>
 
-<div class="radio-history" id="radioHistory">
-  <div class="rh-title">CÁC BÀI HÁT MỚI ĐƯỢC PHÁT TRÊN CHERRY RADIO</div>
-  <iframe id="radioHistoryFrame" src="" loading="lazy" allowtransparency="true"></iframe>
+<div class="radio-mixer" id="radioMixer">
+  <div class="rm-group-title" style="padding-top:2px;">
+    <label class="mixer-toggle" style="font-size:12px;">
+      <input type="checkbox" id="mixerCheckbox">
+      <span class="label">Mixer (phát nhiều âm cùng lúc)</span>
+    </label>
+  </div>
+  <div class="rm-group-title" style="border-top:1px dashed var(--border); margin-top:4px; padding-top:10px;">Kênh radio</div>
+  <div id="radioTracks"></div>
+  <div class="rm-group-title">Âm thanh thư giãn</div>
+  <div id="noiseTracks"></div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js"></script>
+<script>
+(function () {
+  const CHANNELS = [
+    { id: 'tru-tinh', name: 'Trữ Tình', type: 'stream', url: 'https://cherryradio.com.au/stream/tru-tinh.mp3' },
+    { id: 'voh-am610', name: 'VOH AM 610KHz', type: 'hls', url: 'https://1011337676.vnns.net/-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmkiOiIvaHR2Yy9WT0gtQU02MTAuYWRtLnRtcy8iLCJleHAiOjE5MjQ5MjUyMjh9.dAa1es3LlAVnvQ-oLGNBqfEI0yz7fPrjEML_rJAklMQ-/htvc/VOH-AM610.adm.tms/playlist.m3u8' },
+    { id: 'voh-fm999', name: 'VOH FM 99.9 MHz', type: 'hls', url: 'https://1011337676.vnns.net/-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmkiOiIvaHR2Yy9WT0gtRk05OS45LmFkbS50bXMvIiwiZXhwIjoxOTI0OTI1MjI4fQ.zVLoKcCW3tFLySpEQHcYh11PHIxk2ZE1pj5P-GFIm1I-/htvc/VOH-FM99.9.adm.tms/playlist.m3u8' },
+    { id: 'voh-fm925', name: 'VOH-M FM 92-92.5 MHz', type: 'hls', url: 'https://1011337676.vnns.net/-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmkiOiIvaHR2Yy9WT0gtRk05Mi41LmFkbS50bXMvIiwiZXhwIjoxOTI0OTI1MjI4fQ.u5XcdU9KljAz3HgehDbCBbNEvSzWNAQTEKkU-DwH2K8-/htvc/VOH-FM92.5.adm.tms/playlist.m3u8' },
+    { id: 'voh-fm956', name: 'VOH FM 95.6MHz', type: 'hls', url: 'https://1011337676.vnns.net/-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmkiOiIvaHR2Yy9WT0gtRk05NS42LmFkbS50bXMvIiwiZXhwIjoxOTI0OTI1MjI4fQ.isr2nlUkXOPGSxT-KT8FcZQFCcXn58RZrCyqoB3zDGg-/htvc/VOH-FM95.6.adm.tms/playlist.m3u8' },
+    { id: 'voh-fm877', name: 'VOH FM 87.7MHz', type: 'hls', url: 'https://1011337676.vnns.net/-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmkiOiIvaHR2Yy9WT0gtRk04Ny43LmFkbS50bXMvIiwiZXhwIjoxOTI0OTI1MjI4fQ.uqGbd46T32wvTu5qrL2cOng9Vsf7ZHbSTE10PHpP2bE-/htvc/VOH-FM87.7.adm.tms/playlist.m3u8' },
+  ];
+  const NOISES = [
+    { id: 'white', name: 'Tiếng ồn trắng', kind: 'white' },
+    { id: 'pink', name: 'Tiếng ồn hồng', kind: 'pink' },
+    { id: 'brown', name: 'Tiếng ồn nâu', kind: 'brown' },
+    { id: 'rain', name: 'Mưa', kind: 'rain' },
+    { id: 'waves', name: 'Sóng biển', kind: 'waves' },
+  ];
+
+  function showToast(msg) {
+    const toastEl = document.getElementById('toast');
+    if (!toastEl) return;
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    setTimeout(() => toastEl.classList.remove('show'), 1500);
+  }
+
+  let audioCtx = null;
+  function getCtx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+
+  function makeNoiseBuffer(ctx, kind) {
+    const seconds = 4;
+    const len = ctx.sampleRate * seconds;
+    const buffer = ctx.createBuffer(1, len, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    if (kind === 'brown') {
+      let last = 0;
+      for (let i = 0; i < len; i++) {
+        const white = Math.random() * 2 - 1;
+        last = (last + 0.02 * white) / 1.02;
+        data[i] = last * 3.5;
+      }
+    } else if (kind === 'pink') {
+      let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0;
+      for (let i = 0; i < len; i++) {
+        const white = Math.random() * 2 - 1;
+        b0 = 0.99886*b0 + white*0.0555179;
+        b1 = 0.99332*b1 + white*0.0750759;
+        b2 = 0.96900*b2 + white*0.1538520;
+        b3 = 0.86650*b3 + white*0.3104856;
+        b4 = 0.55000*b4 + white*0.5329522;
+        b5 = -0.7616*b5 - white*0.0168980;
+        const out = b0+b1+b2+b3+b4+b5+b6+white*0.5362;
+        b6 = white*0.115926;
+        data[i] = out * 0.11;
+      }
+    } else {
+      for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+    }
+    return buffer;
+  }
+
+  function buildNoiseGraph(ctx, kind, gainNode) {
+    const src = ctx.createBufferSource();
+    src.buffer = makeNoiseBuffer(ctx, kind === 'rain' || kind === 'waves' ? 'white' : kind);
+    src.loop = true;
+    let node = src;
+    if (kind === 'rain') {
+      const hp = ctx.createBiquadFilter();
+      hp.type = 'highpass';
+      hp.frequency.value = 1200;
+      const lp = ctx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = 6000;
+      src.connect(hp); hp.connect(lp); node = lp;
+    } else if (kind === 'waves') {
+      const lp = ctx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = 500;
+      const lfo = ctx.createOscillator();
+      lfo.frequency.value = 0.15;
+      const lfoGain = ctx.createGain();
+      lfoGain.gain.value = 300;
+      lfo.connect(lfoGain); lfoGain.connect(lp.frequency);
+      lfo.start();
+      src.connect(lp); node = lp;
+    }
+    node.connect(gainNode);
+    src.start();
+    return src;
+  }
+
+  function createHtmlRow(track, container, playRow, defaultVolume) {
+    const row = document.createElement('div');
+    row.className = 'track-row';
+    row.dataset.trackId = track.id;
+    const dv = typeof defaultVolume === 'number' ? defaultVolume : 70;
+    row.innerHTML =
+      '<button class="track-btn" title="Phát/Dừng">▶</button>' +
+      '<span class="track-name">' + track.name + '</span>' +
+      '<input type="range" class="track-volume" min="0" max="100" value="' + dv + '">';
+    container.appendChild(row);
+    const btn = row.querySelector('.track-btn');
+    const vol = row.querySelector('.track-volume');
+    btn.addEventListener('click', () => playRow(track, btn, vol));
+    vol.addEventListener('input', () => {
+      const active = activeTracks[track.id];
+      if (active && active.setVolume) active.setVolume(vol.value / 100);
+    });
+    return { row, btn, vol };
+  }
+
+  const radioTrackEls = document.getElementById('radioTracks');
+  const noiseTrackEls = document.getElementById('noiseTracks');
+  const mixerCheckbox = document.getElementById('mixerCheckbox');
+  const mainPlayBtn = document.getElementById('radioPlayMain');
+
+  const activeTracks = {}; // id -> {stop, btn, setVolume}
+  const rowRefs = {}; // id -> {btn, vol}
+
+  function setBtnPlaying(id, playing) {
+    const ref = rowRefs[id];
+    if (ref) {
+      ref.btn.textContent = playing ? '⏹' : '▶';
+      ref.btn.classList.toggle('playing', playing);
+    }
+    if (id === 'tru-tinh') {
+      mainPlayBtn.textContent = playing ? '⏸' : '▶';
+      mainPlayBtn.classList.toggle('playing', playing);
+    }
+  }
+
+  function stopTrack(id) {
+    const t = activeTracks[id];
+    if (!t) return;
+    t.stop();
+    setBtnPlaying(id, false);
+    delete activeTracks[id];
+  }
+
+  function stopAllExcept(exceptId) {
+    Object.keys(activeTracks).forEach((id) => { if (id !== exceptId) stopTrack(id); });
+  }
+
+  function stopAll() { stopAllExcept(null); }
+
+  // Radio channel rows
+  const channelAudioEls = {};
+  function playChannel(ch, volValue) {
+    if (!mixerCheckbox.checked) stopAllExcept(null);
+    let entry = channelAudioEls[ch.id];
+    if (!entry) {
+      const audioEl = new Audio();
+      audioEl.preload = 'none';
+      let hls = null;
+      if (ch.type === 'hls') {
+        if (window.Hls && Hls.isSupported()) {
+          hls = new Hls();
+          hls.loadSource(ch.url);
+          hls.attachMedia(audioEl);
+        } else if (audioEl.canPlayType('application/vnd.apple.mpegurl')) {
+          audioEl.src = ch.url;
+        } else {
+          showToast('Trình duyệt không hỗ trợ phát kênh này');
+          return;
+        }
+      } else {
+        audioEl.src = ch.url;
+      }
+      entry = { audioEl };
+      channelAudioEls[ch.id] = entry;
+    }
+    entry.audioEl.volume = volValue;
+    entry.audioEl.play().catch(() => {
+      showToast('Không phát được kênh ' + ch.name);
+      stopTrack(ch.id);
+    });
+    setBtnPlaying(ch.id, true);
+    activeTracks[ch.id] = {
+      stop: () => { entry.audioEl.pause(); },
+      setVolume: (v) => { entry.audioEl.volume = v; },
+    };
+  }
+
+  CHANNELS.forEach((ch) => {
+    const refs = createHtmlRow(ch, radioTrackEls, (track, btn, volEl) => {
+      if (activeTracks[ch.id]) { stopTrack(ch.id); return; }
+      playChannel(ch, volEl.value / 100);
+    });
+    rowRefs[ch.id] = refs;
+  });
+
+  // Generated ambient noise rows
+  NOISES.forEach((n) => {
+    const refs = createHtmlRow(n, noiseTrackEls, (track, btn, volEl) => {
+      if (activeTracks[n.id]) { stopTrack(n.id); return; }
+      if (!mixerCheckbox.checked) stopAllExcept(null);
+      const ctx = getCtx();
+      const gainNode = ctx.createGain();
+      gainNode.gain.value = volEl.value / 100;
+      gainNode.connect(ctx.destination);
+      const src = buildNoiseGraph(ctx, n.kind, gainNode);
+      setBtnPlaying(n.id, true);
+      activeTracks[n.id] = {
+        stop: () => { try { src.stop(); } catch (e) {} gainNode.disconnect(); },
+        setVolume: (v) => { gainNode.gain.value = v; },
+      };
+    }, 20);
+    rowRefs[n.id] = refs;
+  });
+
+  document.getElementById('radioStopAll').addEventListener('click', stopAll);
+
+  // Nút Play chính -> phát/dừng kênh Trữ Tình mặc định
+  mainPlayBtn.addEventListener('click', () => {
+    if (activeTracks['tru-tinh']) {
+      stopTrack('tru-tinh');
+    } else {
+      const ch = CHANNELS.find((c) => c.id === 'tru-tinh');
+      const ref = rowRefs['tru-tinh'];
+      playChannel(ch, ref ? ref.vol.value / 100 : 0.7);
+    }
+  });
+
+  // Mixer checkbox: turning OFF while several tracks play -> keep only the first one playing
+  mixerCheckbox.addEventListener('change', () => {
+    if (!mixerCheckbox.checked) {
+      const ids = Object.keys(activeTracks);
+      if (ids.length > 1) {
+        ids.slice(1).forEach(stopTrack);
+      }
+    }
+  });
+
+  // Expand/collapse mixer panel
+  const expandBtn = document.getElementById('radioExpandBtn');
+  const mixerPanel = document.getElementById('radioMixer');
+  expandBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = mixerPanel.classList.toggle('show');
+    expandBtn.textContent = isOpen ? '▲' : '▼';
+    expandBtn.classList.toggle('open', isOpen);
+  });
+  document.addEventListener('click', (e) => {
+    if (!mixerPanel.classList.contains('show')) return;
+    const insidePanel = mixerPanel.contains(e.target);
+    const insideWidget = document.getElementById('radioWidget').contains(e.target);
+    if (!insidePanel && !insideWidget) {
+      mixerPanel.classList.remove('show');
+      expandBtn.textContent = '▼';
+      expandBtn.classList.remove('open');
+    }
+  });
+})();
+</script>
 
 <div class="wrap">
   <div class="panel">
@@ -568,92 +867,6 @@
   toggleBackToTop();
   backToTopBtn.addEventListener('click', () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  });
-
-  // --- Widget radio ---
-  const radioSelect = document.getElementById('radioChannel');
-  const radioToggle = document.getElementById('radioToggle');
-  const radioStop = document.getElementById('radioStop');
-  const radioAudio = document.getElementById('radioAudio');
-  let radioPlaying = false;
-
-  function radioLoadAndPlay() {
-    radioAudio.pause();
-    radioAudio.src = radioSelect.value;
-    radioAudio.load();
-    radioAudio.play().then(() => {
-      radioPlaying = true;
-      radioToggle.textContent = '⏸';
-      radioToggle.classList.add('playing');
-    }).catch(() => {
-      radioPlaying = false;
-      radioToggle.textContent = '▶';
-      radioToggle.classList.remove('playing');
-      showToast('Không phát được kênh này');
-    });
-  }
-
-  radioToggle.addEventListener('click', () => {
-    if (radioPlaying) {
-      radioAudio.pause();
-      radioPlaying = false;
-      radioToggle.textContent = '▶';
-      radioToggle.classList.remove('playing');
-    } else {
-      radioLoadAndPlay();
-    }
-  });
-
-  radioStop.addEventListener('click', () => {
-    radioAudio.pause();
-    radioAudio.removeAttribute('src');
-    radioAudio.load();
-    radioPlaying = false;
-    radioToggle.textContent = '▶';
-    radioToggle.classList.remove('playing');
-  });
-
-  // Đổi kênh -> tự động phát ngay kênh vừa chọn
-  radioSelect.addEventListener('change', () => {
-    radioLoadAndPlay();
-  });
-
-  // --- Mở rộng / thu nhỏ danh sách bài hát đã phát ---
-  const radioExpandBtn = document.getElementById('radioExpandBtn');
-  const radioHistory = document.getElementById('radioHistory');
-  const radioHistoryFrame = document.getElementById('radioHistoryFrame');
-  const HISTORY_SRC = 'https://a11.asurahosting.com/public/cherry_radio/history?theme=light';
-  let historyLoaded = false;
-
-  radioExpandBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const isOpen = radioHistory.classList.toggle('show');
-    if (isOpen) {
-      if (!historyLoaded) {
-        radioHistoryFrame.src = HISTORY_SRC;
-        historyLoaded = true;
-      }
-      radioExpandBtn.textContent = '▲';
-      radioExpandBtn.classList.add('open');
-      radioExpandBtn.title = 'Thu nhỏ danh sách bài hát';
-    } else {
-      radioExpandBtn.textContent = '▼';
-      radioExpandBtn.classList.remove('open');
-      radioExpandBtn.title = 'Mở rộng danh sách bài hát';
-    }
-  });
-
-  // Bấm ra ngoài widget/bảng danh sách -> tự động thu nhỏ
-  document.addEventListener('click', (e) => {
-    if (!radioHistory.classList.contains('show')) return;
-    const clickedInsideHistory = radioHistory.contains(e.target);
-    const clickedInsideWidget = document.getElementById('radioWidget').contains(e.target);
-    if (!clickedInsideHistory && !clickedInsideWidget) {
-      radioHistory.classList.remove('show');
-      radioExpandBtn.textContent = '▼';
-      radioExpandBtn.classList.remove('open');
-      radioExpandBtn.title = 'Mở rộng danh sách bài hát';
-    }
   });
 })();
 </script>
