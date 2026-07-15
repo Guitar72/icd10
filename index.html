@@ -7,21 +7,24 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230066FF'/%3E%3Crect x='28' y='14' width='8' height='36' rx='3' fill='white'/%3E%3Crect x='14' y='28' width='36' height='8' rx='3' fill='white'/%3E%3C/svg%3E">
 <style>
   :root {
-    --blue: #2563eb;
-    --blue-light: #eff6ff;
-    --green: #16a34a;
-    --green-light: #f0fdf4;
-    --amber: #d97706;
-    --amber-light: #fffbeb;
-    --border: #e2e8f0;
-    --text: #0f172a;
-    --muted: #64748b;
+    --blue: #60a5fa;
+    --blue-light: #1e3a5f;
+    --green: #4ade80;
+    --green-light: #14301f;
+    --amber: #fbbf24;
+    --amber-light: #3a2e0f;
+    --border: #2d3748;
+    --text: #e5e7eb;
+    --muted: #94a3b8;
+    --bg: #0b0f17;
+    --surface: #151b26;
+    --surface-2: #1c2431;
   }
   * { box-sizing: border-box; }
   body {
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background: #f8fafc;
+    background: var(--bg);
     color: var(--text);
   }
   .wrap {
@@ -30,12 +33,12 @@
     padding: 16px;
   }
   .panel {
-    background: #fff;
+    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 16px;
     margin-bottom: 16px;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.3);
   }
   .panel h1 {
     font-size: 16px;
@@ -64,6 +67,8 @@
     outline: none;
     font-size: 15px;
     font-family: inherit;
+    background: transparent;
+    color: var(--text);
   }
   .search-row button.clear {
     border: none;
@@ -90,7 +95,7 @@
   .results { display: flex; flex-direction: column; gap: 10px; }
 
   .card {
-    background: #fff;
+    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 10px;
     padding: 10px 12px;
@@ -151,14 +156,14 @@
   }
   .copy-btn {
     border: 1px solid var(--border);
-    background: #fff;
+    background: var(--surface-2);
     border-radius: 6px;
     padding: 4px 8px;
     font-size: 12px;
     cursor: pointer;
     color: var(--muted);
   }
-  .copy-btn:hover { background: #f1f5f9; }
+  .copy-btn:hover { background: #2b3646; }
   .name { font-weight: 600; font-size: 14.5px; margin: 4px 0 2px; }
   .en { font-style: italic; color: var(--muted); font-size: 12.5px; margin-bottom: 6px; }
   .banner {
@@ -170,11 +175,11 @@
   .banner b { display: block; font-size: 13px; margin-bottom: 2px; }
   .banner.ok { background: var(--green-light); color: var(--green); }
   .banner.warn { background: var(--amber-light); color: var(--amber); }
-  .banner.default { background: #f1f5f9; color: var(--muted); }
+  .banner.default { background: var(--surface-2); color: var(--muted); }
   .meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
   .meta span {
     font-size: 11.5px;
-    background: #f1f5f9;
+    background: var(--surface-2);
     color: var(--muted);
     padding: 2px 7px;
     border-radius: 999px;
@@ -199,8 +204,8 @@
     bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background: var(--text);
-    color: #fff;
+    background: #e5e7eb;
+    color: #0b0f17;
     padding: 8px 16px;
     border-radius: 8px;
     font-size: 13px;
@@ -249,11 +254,11 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    background: #fff;
+    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 999px;
     padding: 5px 8px 5px 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.4);
     font-size: 12px;
   }
   .radio-widget .radio-title {
@@ -292,9 +297,9 @@
   }
   .radio-widget .mixer-toggle input { cursor: pointer; }
   .radio-widget button.expand-btn {
-    border: 1px solid #94a3b8;
-    background: #fff;
-    color: #1e293b;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
     width: 24px;
     height: 24px;
     border-radius: 6px;
@@ -307,7 +312,7 @@
     flex-shrink: 0;
     line-height: 1;
   }
-  .radio-widget button.expand-btn:hover { background: #f1f5f9; border-color: #64748b; }
+  .radio-widget button.expand-btn:hover { background: #2b3646; border-color: var(--muted); }
   .radio-widget button.expand-btn.open { background: var(--blue); color: #fff; border-color: var(--blue); }
   @media (max-width: 480px) {
     .radio-widget { top: 6px; right: 6px; padding: 4px 6px 4px 8px; gap: 4px; }
@@ -323,10 +328,10 @@
     max-width: calc(100vw - 20px);
     max-height: 70vh;
     overflow-y: auto;
-    background: #fff;
+    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 12px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.5);
     z-index: 999;
     display: none;
     padding: 8px;
@@ -347,7 +352,7 @@
     padding: 6px;
     border-radius: 8px;
   }
-  .track-row:hover { background: #f8fafc; }
+  .track-row:hover { background: var(--surface-2); }
   .track-row .track-name {
     flex: 1;
     font-size: 12.5px;
