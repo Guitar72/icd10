@@ -396,10 +396,10 @@
       <span class="label">Mixer (phát nhiều âm cùng lúc)</span>
     </label>
   </div>
-  <div class="rm-group-title" style="border-top:1px dashed var(--border); margin-top:4px; padding-top:10px;">Kênh radio</div>
+  <div class="rm-group-title" style="border-top:1px dashed var(--border); margin-top:4px; padding-top:10px;">RADIO TRỰC TUYẾN</div>
   <div id="radioTracks"></div>
-  <div class="rm-group-title">Âm thanh thư giãn</div>
-  <div id="noiseTracks"></div>
+  <div class="rm-group-title">ÂM THANH THƯ GIÃN</div>
+  <div id="relaxTracks"></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js"></script>
@@ -413,12 +413,27 @@
     { id: 'voh-fm956', name: 'VOH FM 95.6MHz', type: 'hls', url: 'https://1011337676.vnns.net/-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmkiOiIvaHR2Yy9WT0gtRk05NS42LmFkbS50bXMvIiwiZXhwIjoxOTI0OTI1MjI4fQ.isr2nlUkXOPGSxT-KT8FcZQFCcXn58RZrCyqoB3zDGg-/htvc/VOH-FM95.6.adm.tms/playlist.m3u8' },
     { id: 'voh-fm877', name: 'VOH FM 87.7MHz', type: 'hls', url: 'https://1011337676.vnns.net/-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmkiOiIvaHR2Yy9WT0gtRk04Ny43LmFkbS50bXMvIiwiZXhwIjoxOTI0OTI1MjI4fQ.uqGbd46T32wvTu5qrL2cOng9Vsf7ZHbSTE10PHpP2bE-/htvc/VOH-FM87.7.adm.tms/playlist.m3u8' },
   ];
-  const NOISES = [
-    { id: 'white', name: 'Tiếng ồn trắng', kind: 'white' },
-    { id: 'pink', name: 'Tiếng ồn hồng', kind: 'pink' },
-    { id: 'brown', name: 'Tiếng ồn nâu', kind: 'brown' },
-    { id: 'rain', name: 'Mưa', kind: 'rain' },
-    { id: 'waves', name: 'Sóng biển', kind: 'waves' },
+  const RELAX = [
+    { id: 'td-song-bien-nhe-nhang', name: 'Sóng Biển nhẹ nhàng', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/Tieng-song-bien-nhe-nhang-www_tiengdong_com.mp3' },
+    { id: 'td-song-bien', name: 'Sóng Biển', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/Tieng-song-bien-www_tiengdong_com.mp3' },
+    { id: 'td-song-bien-vo-bo', name: 'Sóng Biển vỗ bờ', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/tieng-song-bien-vo-bo-www_tiengdong_com.mp3' },
+    { id: 'td-song-hai-au', name: 'Sóng biển & Hải Âu', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/Tieng-song-bien-va-tieng-hai-au-keu-www_tiengdong_com.mp3' },
+    { id: 'td-mua-bai-bien', name: 'Mưa trên Bãi biển', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/Tieng-mua-tren-bai-bien-www_tiengdong_com.mp3' },
+    { id: 'td-song-ri-rao', name: 'Sóng Biển rì rào', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/Am-thanh-tieng-song-bien-ri-rao-www_tiengdong_com.mp3' },
+    { id: 'td-am-thanh-thien-nhien', name: 'Âm thanh Thiên Nhiên', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/Am-thanh-thien-nhien-www_tiengdong_com.mp3' },
+    { id: 'td-dong-que', name: 'Đồng Quê thanh bình', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/Tieng-dong-que-thanh-binh-www_tiengdong_com.mp3' },
+    { id: 'td-buoi-sang-trong-lanh', name: 'Buổi sáng Trong lành', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/Am-thanh-buoi-sang-trong-lanh-www_tiengdong_com.mp3' },
+    { id: 'td-chim-hot-suoi-chay', name: 'Chim hót & Suối chảy', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/Tieng-chim-hot-va-tieng-suoi-chay-trong-rung-www_tiengdong_com.mp3' },
+    { id: 'td-nhac-piano-nhe-nhang', name: 'Nhạc nền Piano nhẹ nhàng', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/Nhac-nen-tinh-yeu-dep-cam-dong-nhe-nhang-piano-www_tiengdong_com.mp3' },
+    { id: 'td-song-cuon', name: 'Sóng Cuộn', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/Tieng-song-cuon-www_tiengdong_com.mp3' },
+    { id: 'td-chim-hai-au-song-bien', name: 'Chim Hải Âu & Sóng Biển', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/Tieng-chim-hai-au-keu-va-tieng-song-bien-www_tiengdong_com.mp3' },
+    { id: 'td-gio-bien-song-mua-he', name: 'Gió biển và Sóng mùa hè', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/Am-thanh-gio-bien-va-song-mua-he-www_tiengdong_com.mp3' },
+    { id: 'td-song-bien-vo-vao-bo', name: 'Sóng biển Vỗ vào bờ', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/Tieng-song-bien-vo-vao-bo-www_tiengdong_com.mp3' },
+    { id: 'td-mua-dot-mai-gac-xep', name: 'Mưa dột mái Gác xép', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/Tieng-nuoc-mua-dot-mai-ben-trong-can-gac-xep-www_tiengdong_com.mp3' },
+    { id: 'td-troi-mua-nhe', name: 'Trời Mưa nhẹ', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/Tieng-troi-mua-nhe-www_tiengdong_com.mp3' },
+    { id: 'td-moi-truong-rung', name: 'Môi trường Tự nhiên trong Rừng', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/Am-thanh-moi-truong-tu-nhien-trong-rung-www_tiengdong_com.mp3' },
+    { id: 'td-dong-vat-rung-ram', name: 'Kêu của các loài Động Vật trong rừng rậm', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/Tieng-keu-cua-cac-loai-dong-vat-khac-nhau-trong-rung-ram-www_tiengdong_com.mp3' },
+    { id: 'td-chim-hot-cong-vien', name: 'Chim hót trong Công viên thành phố', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/tieng-chim-hot-trong-cong-vien-thanh-pho-www_tiengdong_com.mp3' },
   ];
 
   function showToast(msg) {
@@ -468,20 +483,149 @@
     return buffer;
   }
 
-  function buildNoiseGraph(ctx, kind, gainNode) {
+  // --- Lịch phát sự kiện ngẫu nhiên (crackle, sấm, tiếng dế/ếch...) ---
+  function scheduleEvents(genEvent, minGapMs, maxGapMs) {
+    let stopped = false;
+    let timer = null;
+    function tick() {
+      if (stopped) return;
+      try { genEvent(); } catch (e) {}
+      const wait = minGapMs + Math.random() * (maxGapMs - minGapMs);
+      timer = setTimeout(tick, wait);
+    }
+    timer = setTimeout(tick, minGapMs + Math.random() * (maxGapMs - minGapMs));
+    return {
+      stop() {
+        stopped = true;
+        if (timer) clearTimeout(timer);
+      },
+    };
+  }
+
+  // Tiếng nổ lách tách ngắn (lò sưởi)
+  function playCrackle(ctx, dest, opts) {
+    const o = opts || {};
+    const freqMin = o.freqMin || 900, freqMax = o.freqMax || 3200;
+    const durMin = o.durMin || 0.02, durMax = o.durMax || 0.07;
+    const gainMin = o.gainMin || 0.08, gainMax = o.gainMax || 0.3;
+    const dur = durMin + Math.random() * (durMax - durMin);
+    const len = Math.max(1, Math.floor(ctx.sampleRate * dur));
+    const buffer = ctx.createBuffer(1, len, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
     const src = ctx.createBufferSource();
-    src.buffer = makeNoiseBuffer(ctx, kind === 'rain' || kind === 'waves' ? 'white' : kind);
-    src.loop = true;
-    let node = src;
+    src.buffer = buffer;
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = freqMin + Math.random() * (freqMax - freqMin);
+    bp.Q.value = 4 + Math.random() * 4;
+    const g = ctx.createGain();
+    const peak = gainMin + Math.random() * (gainMax - gainMin);
+    const now = ctx.currentTime;
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(peak, now + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    src.connect(bp); bp.connect(g); g.connect(dest);
+    src.start(now);
+    src.stop(now + dur + 0.02);
+  }
+
+  // Tiếng sấm xa (giông bão)
+  function playThunder(ctx, dest) {
+    const dur = 2 + Math.random() * 3;
+    const len = Math.floor(ctx.sampleRate * dur);
+    const buffer = ctx.createBuffer(1, len, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    let last = 0;
+    for (let i = 0; i < len; i++) {
+      const white = Math.random() * 2 - 1;
+      last = (last + 0.02 * white) / 1.02;
+      data[i] = last * 3.5;
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 150 + Math.random() * 100;
+    const g = ctx.createGain();
+    const now = ctx.currentTime;
+    const peak = 0.4 + Math.random() * 0.3;
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(peak, now + 0.3 + Math.random() * 0.5);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    src.connect(lp); lp.connect(g); g.connect(dest);
+    src.start(now);
+    src.stop(now + dur + 0.1);
+  }
+
+  // Một tiếng "chip" ngắn (dùng cho dế/ếch)
+  function playChirp(ctx, dest, opts) {
+    const o = opts || {};
+    const freq = o.freq || 4200;
+    const dur = o.dur || 0.06;
+    const gainVal = o.gain || 0.15;
+    const glide = o.glide || 0;
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    const now = ctx.currentTime;
+    osc.frequency.setValueAtTime(freq, now);
+    if (glide) osc.frequency.linearRampToValueAtTime(freq + glide, now + dur * 0.7);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(gainVal, now + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    osc.connect(g); g.connect(dest);
+    osc.start(now);
+    osc.stop(now + dur + 0.02);
+  }
+
+  // Một cụm tiếng dế kêu rộ (nhiều chip liên tiếp rất nhanh)
+  function playCricketBurst(ctx, dest) {
+    const n = 4 + Math.floor(Math.random() * 5);
+    const baseFreq = 4000 + Math.random() * 600;
+    for (let i = 0; i < n; i++) {
+      setTimeout(() => {
+        playChirp(ctx, dest, { freq: baseFreq + (Math.random() * 100 - 50), dur: 0.035, gain: 0.12 });
+      }, i * 33);
+    }
+  }
+
+  // Một tiếng ếch kêu (peep), cao và có lướt nhẹ lên
+  function playPeep(ctx, dest) {
+    const freq = 2800 + Math.random() * 500;
+    playChirp(ctx, dest, { freq, dur: 0.22, gain: 0.18, glide: freq * 0.15 });
+  }
+
+  function buildNoiseGraph(ctx, kind, gainNode) {
+    // Các âm nhiễu liên tục cơ bản
+    if (kind === 'white' || kind === 'pink' || kind === 'brown') {
+      const src = ctx.createBufferSource();
+      src.buffer = makeNoiseBuffer(ctx, kind);
+      src.loop = true;
+      src.connect(gainNode);
+      src.start();
+      return { stop() { try { src.stop(); } catch (e) {} } };
+    }
+
     if (kind === 'rain') {
+      const src = ctx.createBufferSource();
+      src.buffer = makeNoiseBuffer(ctx, 'white');
+      src.loop = true;
       const hp = ctx.createBiquadFilter();
       hp.type = 'highpass';
       hp.frequency.value = 1200;
       const lp = ctx.createBiquadFilter();
       lp.type = 'lowpass';
       lp.frequency.value = 6000;
-      src.connect(hp); hp.connect(lp); node = lp;
-    } else if (kind === 'waves') {
+      src.connect(hp); hp.connect(lp); lp.connect(gainNode);
+      src.start();
+      return { stop() { try { src.stop(); } catch (e) {} } };
+    }
+
+    if (kind === 'waves') {
+      const src = ctx.createBufferSource();
+      src.buffer = makeNoiseBuffer(ctx, 'white');
+      src.loop = true;
       const lp = ctx.createBiquadFilter();
       lp.type = 'lowpass';
       lp.frequency.value = 500;
@@ -491,11 +635,189 @@
       lfoGain.gain.value = 300;
       lfo.connect(lfoGain); lfoGain.connect(lp.frequency);
       lfo.start();
-      src.connect(lp); node = lp;
+      src.connect(lp); lp.connect(gainNode);
+      src.start();
+      return { stop() { try { src.stop(); } catch (e) {} try { lfo.stop(); } catch (e) {} } };
     }
-    node.connect(gainNode);
+
+    // Tiếng ồn nâu làm mượt: lọc thông thấp mạnh hơn cho êm tai khi nghe lâu
+    if (kind === 'brown-smooth') {
+      const src = ctx.createBufferSource();
+      src.buffer = makeNoiseBuffer(ctx, 'brown');
+      src.loop = true;
+      const lp = ctx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = 700;
+      src.connect(lp); lp.connect(gainNode);
+      src.start();
+      return { stop() { try { src.stop(); } catch (e) {} } };
+    }
+
+    // Tiếng ồn nâu sâu kèm lớp tinh chỉnh 432 Hz rất nhẹ
+    if (kind === 'brown-432hz') {
+      const src = ctx.createBufferSource();
+      src.buffer = makeNoiseBuffer(ctx, 'brown');
+      src.loop = true;
+      const lp = ctx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = 550;
+      src.connect(lp); lp.connect(gainNode);
+      src.start();
+
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = 432;
+      const toneGain = ctx.createGain();
+      toneGain.gain.value = 0.05;
+      osc.connect(toneGain); toneGain.connect(gainNode);
+      osc.start();
+
+      return {
+        stop() {
+          try { src.stop(); } catch (e) {}
+          try { osc.stop(); } catch (e) {}
+        },
+      };
+    }
+
+    // Lò sưởi: nền rì rầm trầm + tiếng nổ lách tách ngẫu nhiên
+    if (kind === 'fireplace') {
+      const rumbleSrc = ctx.createBufferSource();
+      rumbleSrc.buffer = makeNoiseBuffer(ctx, 'brown');
+      rumbleSrc.loop = true;
+      const lp = ctx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = 280;
+      const rumbleGain = ctx.createGain();
+      rumbleGain.gain.value = 0.35;
+      rumbleSrc.connect(lp); lp.connect(rumbleGain); rumbleGain.connect(gainNode);
+      rumbleSrc.start();
+
+      const scheduler = scheduleEvents(() => {
+        playCrackle(ctx, gainNode, { freqMin: 900, freqMax: 3200, durMin: 0.02, durMax: 0.07, gainMin: 0.08, gainMax: 0.3 });
+      }, 90, 320);
+
+      return {
+        stop() {
+          try { rumbleSrc.stop(); } catch (e) {}
+          scheduler.stop();
+        },
+      };
+    }
+
+    // Giông bão: mưa liên tục + tiếng sấm xa thỉnh thoảng
+    if (kind === 'thunderstorm') {
+      const rainSrc = ctx.createBufferSource();
+      rainSrc.buffer = makeNoiseBuffer(ctx, 'white');
+      rainSrc.loop = true;
+      const hp = ctx.createBiquadFilter();
+      hp.type = 'highpass';
+      hp.frequency.value = 1200;
+      const lpRain = ctx.createBiquadFilter();
+      lpRain.type = 'lowpass';
+      lpRain.frequency.value = 6000;
+      const rainGain = ctx.createGain();
+      rainGain.gain.value = 0.6;
+      rainSrc.connect(hp); hp.connect(lpRain); lpRain.connect(rainGain); rainGain.connect(gainNode);
+      rainSrc.start();
+
+      const scheduler = scheduleEvents(() => {
+        playThunder(ctx, gainNode);
+      }, 7000, 18000);
+
+      return {
+        stop() {
+          try { rainSrc.stop(); } catch (e) {}
+          scheduler.stop();
+        },
+      };
+    }
+
+    // Đêm — tiếng dế: nền không khí đêm tĩnh + từng cụm dế kêu
+    if (kind === 'night') {
+      const bedSrc = ctx.createBufferSource();
+      bedSrc.buffer = makeNoiseBuffer(ctx, 'brown');
+      bedSrc.loop = true;
+      const lp = ctx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = 400;
+      const bedGain = ctx.createGain();
+      bedGain.gain.value = 0.12;
+      bedSrc.connect(lp); lp.connect(bedGain); bedGain.connect(gainNode);
+      bedSrc.start();
+
+      const scheduler = scheduleEvents(() => {
+        playCricketBurst(ctx, gainNode);
+      }, 500, 1600);
+
+      return {
+        stop() {
+          try { bedSrc.stop(); } catch (e) {}
+          scheduler.stop();
+        },
+      };
+    }
+
+    // Quán cà phê: tiếng nhiễu lọc dải trung, âm lượng lên xuống chậm như tiếng trò chuyện rì rầm
+    if (kind === 'people') {
+      const src = ctx.createBufferSource();
+      src.buffer = makeNoiseBuffer(ctx, 'white');
+      src.loop = true;
+      const bp = ctx.createBiquadFilter();
+      bp.type = 'bandpass';
+      bp.frequency.value = 1100;
+      bp.Q.value = 0.6;
+      const murmurGain = ctx.createGain();
+      murmurGain.gain.value = 0.5;
+      const lfo = ctx.createOscillator();
+      lfo.frequency.value = 0.15;
+      const lfoGain = ctx.createGain();
+      lfoGain.gain.value = 0.2;
+      lfo.connect(lfoGain); lfoGain.connect(murmurGain.gain);
+      lfo.start();
+      src.connect(bp); bp.connect(murmurGain); murmurGain.connect(gainNode);
+      src.start();
+
+      return {
+        stop() {
+          try { src.stop(); } catch (e) {}
+          try { lfo.stop(); } catch (e) {}
+        },
+      };
+    }
+
+    // Tiếng ếch ban đêm: nền không khí đêm nhẹ + từng tiếng ếch kêu cao vút
+    if (kind === 'spring-peeper') {
+      const bedSrc = ctx.createBufferSource();
+      bedSrc.buffer = makeNoiseBuffer(ctx, 'brown');
+      bedSrc.loop = true;
+      const lp = ctx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = 350;
+      const bedGain = ctx.createGain();
+      bedGain.gain.value = 0.1;
+      bedSrc.connect(lp); lp.connect(bedGain); bedGain.connect(gainNode);
+      bedSrc.start();
+
+      const scheduler = scheduleEvents(() => {
+        playPeep(ctx, gainNode);
+      }, 650, 1300);
+
+      return {
+        stop() {
+          try { bedSrc.stop(); } catch (e) {}
+          scheduler.stop();
+        },
+      };
+    }
+
+    // Dự phòng: tiếng ồn trắng thường
+    const src = ctx.createBufferSource();
+    src.buffer = makeNoiseBuffer(ctx, 'white');
+    src.loop = true;
+    src.connect(gainNode);
     src.start();
-    return src;
+    return { stop() { try { src.stop(); } catch (e) {} } };
   }
 
   function createHtmlRow(track, container, playRow, defaultVolume) {
@@ -519,7 +841,7 @@
   }
 
   const radioTrackEls = document.getElementById('radioTracks');
-  const noiseTrackEls = document.getElementById('noiseTracks');
+  const relaxTrackEls = document.getElementById('relaxTracks');
   const mixerCheckbox = document.getElementById('mixerCheckbox');
   const mainPlayBtn = document.getElementById('radioPlayMain');
 
@@ -574,6 +896,7 @@
         }
       } else {
         audioEl.src = ch.url;
+        audioEl.loop = true;
       }
       entry = { audioEl };
       channelAudioEls[ch.id] = entry;
@@ -598,23 +921,13 @@
     rowRefs[ch.id] = refs;
   });
 
-  // Generated ambient noise rows
-  NOISES.forEach((n) => {
-    const refs = createHtmlRow(n, noiseTrackEls, (track, btn, volEl) => {
-      if (activeTracks[n.id]) { stopTrack(n.id); return; }
-      if (!mixerCheckbox.checked) stopAllExcept(null);
-      const ctx = getCtx();
-      const gainNode = ctx.createGain();
-      gainNode.gain.value = volEl.value / 100;
-      gainNode.connect(ctx.destination);
-      const src = buildNoiseGraph(ctx, n.kind, gainNode);
-      setBtnPlaying(n.id, true);
-      activeTracks[n.id] = {
-        stop: () => { try { src.stop(); } catch (e) {} gainNode.disconnect(); },
-        setVolume: (v) => { gainNode.gain.value = v; },
-      };
-    }, 20);
-    rowRefs[n.id] = refs;
+  // Nhóm "Âm thanh thư giãn" — phát mp3 giống kênh radio
+  RELAX.forEach((track) => {
+    const refs = createHtmlRow(track, relaxTrackEls, (t, btn, volEl) => {
+      if (activeTracks[t.id]) { stopTrack(t.id); return; }
+      playChannel(t, volEl.value / 100);
+    }, 70);
+    rowRefs[track.id] = refs;
   });
 
   document.getElementById('radioStopAll').addEventListener('click', stopAll);
