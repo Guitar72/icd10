@@ -12,7 +12,10 @@
     --green: #6fcdc4;
     --green-light: #142826;
     --green-border: #2a5f5a;
+    --red: #ef5350;
+    --red-dark: #c23a37;
     --amber: #fbbf24;
+    --amber-dark: #d9a017;
     --amber-light: #3a2e0f;
     --border: #2d3748;
     --text: #e5e7eb;
@@ -313,7 +316,7 @@
   }
   .radio-widget button.radio-toggle {
     border: none;
-    background: var(--muted);
+    background: var(--blue);
     color: #fff;
     width: 24px;
     height: 24px;
@@ -326,9 +329,11 @@
     flex-shrink: 0;
     line-height: 1;
   }
-  .radio-widget button.radio-toggle:hover { background: #475569; }
+  .radio-widget button.radio-toggle:hover { background: #4a8fbd; }
   .radio-widget button.radio-toggle.playing { background: var(--green); }
-  .radio-widget button.radio-toggle.playing:hover { background: #15803d; }
+  .radio-widget button.radio-toggle.playing:hover { background: #58b8ae; }
+  .radio-widget button#radioStopAll { background: var(--red); }
+  .radio-widget button#radioStopAll:hover { background: var(--red-dark); }
   .radio-widget .mixer-toggle {
     display: flex;
     align-items: center;
@@ -341,9 +346,9 @@
   }
   .radio-widget .mixer-toggle input { cursor: pointer; }
   .radio-widget button.expand-btn {
-    border: 1px solid var(--border);
-    background: var(--surface-2);
-    color: var(--text);
+    border: 1px solid var(--amber);
+    background: var(--amber);
+    color: #2b2107;
     width: 24px;
     height: 24px;
     border-radius: 6px;
@@ -356,8 +361,8 @@
     flex-shrink: 0;
     line-height: 1;
   }
-  .radio-widget button.expand-btn:hover { background: #2b3646; border-color: var(--muted); }
-  .radio-widget button.expand-btn.open { background: var(--blue); color: #fff; border-color: var(--blue); }
+  .radio-widget button.expand-btn:hover { background: var(--amber-dark); border-color: var(--amber-dark); }
+  .radio-widget button.expand-btn.open { background: var(--amber-dark); color: #2b2107; border-color: var(--amber-dark); }
   @media (max-width: 480px) {
     .radio-widget { top: 6px; right: 6px; padding: 4px 6px 4px 8px; gap: 4px; }
     .radio-widget .radio-title { display: none; }
@@ -421,7 +426,7 @@
     flex-shrink: 0;
     line-height: 1;
   }
-  .track-row button.track-btn.playing { background: var(--green); }
+  .track-row button.track-btn.playing { background: var(--red); }
   .track-row input.track-volume {
     width: 72px;
     accent-color: var(--blue);
