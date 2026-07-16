@@ -1181,16 +1181,30 @@
       (row) =>
         row.codeNorm.includes(q) || row.nameNorm.includes(q) || row.enNorm.includes(q)
     );
-    currentMatches = matches;
 
-    statusEl.textContent = `Tìm thấy ${matches.length.toLocaleString('vi-VN')} kết quả cho "${query}"`;
+    // Nếu 1 mã nhóm (có children) khớp tìm kiếm, ẩn bớt các mã con của nó
+    // để tránh hiện trùng lặp (mã con đã nằm trong khối gợi ý màu xanh lá).
+    const childCodesToHide = new Set();
+    matches.forEach((row) => {
+      if (row.item.children && row.item.children.length > 0) {
+        row.item.children.forEach((c) => childCodesToHide.add(c.code));
+      }
+    });
+    const dedupedMatches = matches.filter(
+      (row) =>
+        (row.item.children && row.item.children.length > 0) ||
+        !childCodesToHide.has(row.item.code)
+    );
+    currentMatches = dedupedMatches;
 
-    if (matches.length === 0) {
+    statusEl.textContent = `Tìm thấy ${dedupedMatches.length.toLocaleString('vi-VN')} kết quả cho "${query}"`;
+
+    if (dedupedMatches.length === 0) {
       resultsEl.innerHTML = '<div class="empty">Không tìm thấy mã hoặc bệnh phù hợp.</div>';
       return;
     }
 
-    showList(matches);
+    showList(dedupedMatches);
   }
 
   function showList(matches) {
@@ -1240,9 +1254,11 @@
     const childBtn = e.target.closest('.child-btn');
     if (childBtn) {
       const code = childBtn.dataset.code;
-      input.value = code;
-      doSearch(code);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      const found = searchIndex.find((row) => row.item.code === code);
+      if (found) {
+        showDetail(found.item);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
       return;
     }
     const copyBtn = e.target.closest('.copy-btn');
