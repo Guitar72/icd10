@@ -231,6 +231,16 @@
     color: var(--muted);
   }
   .copy-btn:hover { background: #2b3646; }
+  .result-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .copy-btn-inline {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
   .name { font-weight: 600; font-size: 14.5px; margin: 4px 0 2px; }
   .en { font-style: italic; color: var(--muted); font-size: 12.5px; margin-bottom: 6px; }
   .banner {
@@ -1064,7 +1074,7 @@
 
 <div class="wrap">
   <div class="panel">
-    <h1>Tra cứu ICD-10 (Áp dụng theo 06/2026/TT-BYT - Phiên bản trực quan bởi DHA)</h1>
+    <h1>Tra cứu ICD-10 (Bản rút gọn bởi Hoàng Anh Jupiter)</h1>
     <div class="sub"></div>
     <div class="search-row">
       <span class="icon">⌕</span>
@@ -1168,10 +1178,13 @@
 
     return `
       <div class="card">
-        <button class="result-btn${warnClass}" data-code="${escapeAttr(item.code)}">
-          <code>${escapeHtml(item.code)}</code>
-          <span>${escapeHtml(item.name)}</span>
-        </button>
+        <div class="result-row">
+          <button class="result-btn${warnClass}" data-code="${escapeAttr(item.code)}">
+            <code>${escapeHtml(item.code)}</code>
+            <span>${escapeHtml(item.name)}</span>
+          </button>
+          ${!isDropped ? `<button class="copy-btn copy-btn-inline" data-copy="${escapeAttr(item.code)}">Copy mã</button>` : ''}
+        </div>
         ${inlineWarningHtml}
       </div>`;
   }
