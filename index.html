@@ -142,6 +142,17 @@
     color: var(--green);
     white-space: nowrap;
   }
+  .child-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .child-row .child-btn {
+    flex: 1 1 auto;
+  }
+  .child-row .copy-btn-inline {
+    flex: 0 0 auto;
+  }
 
   /* --- Mã cụ thể (mã lá) hiển thị rút gọn trong danh sách --- */
   .result-btn {
@@ -1150,10 +1161,13 @@
       const childrenHtml = item.children
         .map(
           (c) =>
-            `<button class="child-btn" data-code="${escapeAttr(c.code)}">
-               <code>${escapeHtml(c.code)}</code>
-               <span>${escapeHtml(c.name)}</span>
-             </button>`
+            `<div class="child-row">
+               <button class="child-btn" data-code="${escapeAttr(c.code)}">
+                 <code>${escapeHtml(c.code)}</code>
+                 <span>${escapeHtml(c.name)}</span>
+               </button>
+               <button class="copy-btn copy-btn-inline" data-copy="${escapeAttr(c.code)}">Copy mã</button>
+             </div>`
         )
         .join('');
       return `
