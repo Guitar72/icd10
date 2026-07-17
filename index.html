@@ -158,6 +158,26 @@
     font-family: inherit;
     font-size: 14px;
   }
+  .result-btn--dropped code,
+  .result-btn--dropped span,
+  .result-btn--dropped:hover span {
+    color: var(--red);
+  }
+  .inline-warning {
+    margin: -4px 14px 10px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+  .inline-warning--dropped {
+    background: var(--red-dark);
+    color: #fff;
+  }
+  .inline-warning--not-recommended {
+    background: var(--amber-light);
+    color: var(--amber);
+  }
   .result-btn code {
     font-weight: 700;
     font-size: 14px;
@@ -1136,12 +1156,23 @@
     }
 
     // Mã cụ thể (mã lá) -> chỉ hiện rút gọn, bấm vào mới xem chi tiết
+    // Nếu mã có cảnh báo (statusTitle) thì hiện luôn ngoài danh sách, không cần bấm vào chi tiết
+    const isDropped = item.statusTitle === 'Cần chọn mã cụ thể hơn';
+    const isNotRecommended = item.statusTitle === 'Không khuyến khích dùng làm bệnh chính';
+    const warnClass = isDropped ? ' result-btn--dropped' : (isNotRecommended ? ' result-btn--not-recommended' : '');
+    const inlineWarningHtml = isDropped
+      ? '<div class="inline-warning inline-warning--dropped">Đã bỏ mã, cần chọn mã cụ thể hơn</div>'
+      : (isNotRecommended
+          ? '<div class="inline-warning inline-warning--not-recommended">Không khuyến khích dùng làm bệnh chính</div>'
+          : '');
+
     return `
       <div class="card">
-        <button class="result-btn" data-code="${escapeAttr(item.code)}">
+        <button class="result-btn${warnClass}" data-code="${escapeAttr(item.code)}">
           <code>${escapeHtml(item.code)}</code>
           <span>${escapeHtml(item.name)}</span>
         </button>
+        ${inlineWarningHtml}
       </div>`;
   }
 
