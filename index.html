@@ -534,8 +534,7 @@
   <div class="rm-group-title" style="border-top:1px dashed var(--border); margin-top:4px; padding-top:10px;">TÌM & NGHE NHẠC (YOUTUBE)</div>
   <div style="padding: 4px 6px 8px;">
     <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
-      <button id="ytApiKeyBtn" style="flex-shrink:0; border:1px solid var(--border); background:var(--surface-2); color:var(--text); border-radius:6px; padding:6px 10px; font-size:12px; cursor:pointer;">🔑 Nhập API Key</button>
-      <span id="ytApiKeyStatus" style="font-size:11.5px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Chưa có key</span>
+      <span id="ytApiKeyStatus" style="font-size:11px; color:var(--muted);"></span>
     </div>
     <div style="display:flex; gap:6px; margin-bottom:6px;">
       <input type="text" id="ytSearchInput" placeholder="Tìm bài hát, ca sĩ..."
@@ -1132,8 +1131,18 @@
   });
 
   // ===== Tìm & nghe nhạc YouTube (audio-only) =====
-  const YT_KEY_STORAGE = 'ytApiKey';
-  const ytApiKeyBtn = document.getElementById('ytApiKeyBtn');
+  // API key được nhúng cứng sẵn — ai mở file này cũng dùng được ngay, không cần nhập.
+  // Nhiều API key được nhúng cứng sẵn — tự động xoay vòng khi 1 key hết quota trong ngày.
+  const YT_API_KEYS = [
+    'AIzaSyDsKyNxabV3opwnWaknID3XApEr3kpTRwU',
+    'AIzaSyDh9nos35nE7_0nZ9-wlLSvGw-onTaFH2U',
+    'AIzaSyBFJb4JCQH77VzjnV863YvSUn6Xnx4OJrM',
+    'AIzaSyBeyLXr9aeINdFsJTX56dCXUtkAkWvD1Jk',
+    'AIzaSyAbB2Gqpa4U6QX4gWSwuCAro16zDGQ-I2Q',
+  ];
+  const YT_KEY_INDEX_STORAGE = 'ytApiKeyIndex';
+  let ytKeyIndex = parseInt(localStorage.getItem(YT_KEY_INDEX_STORAGE) || '0', 10);
+  if (isNaN(ytKeyIndex) || ytKeyIndex < 0 || ytKeyIndex >= YT_API_KEYS.length) ytKeyIndex = 0;
   const ytApiKeyStatus = document.getElementById('ytApiKeyStatus');
   const ytSearchInput = document.getElementById('ytSearchInput');
   const ytSearchBtn = document.getElementById('ytSearchBtn');
@@ -1144,31 +1153,7 @@
   const ytStopBtn = document.getElementById('ytStopBtn');
   const ytPlayerHost = document.getElementById('ytPlayerHost');
 
-  let ytApiKey = localStorage.getItem(YT_KEY_STORAGE) || '';
-
-  function refreshYtKeyStatus() {
-    if (ytApiKey) {
-      const masked = ytApiKey.length > 6
-        ? ytApiKey.slice(0, 4) + '••••' + ytApiKey.slice(-2)
-        : '••••';
-      ytApiKeyStatus.textContent = 'Đã lưu key: ' + masked;
-    } else {
-      ytApiKeyStatus.textContent = 'Chưa có key';
-    }
-  }
-  refreshYtKeyStatus();
-
-  ytApiKeyBtn.addEventListener('click', () => {
-    const input = window.prompt('Dán YouTube API key vào đây rồi bấm OK để lưu\n(để trống rồi OK sẽ xoá key đã lưu):', ytApiKey || '');
-    if (input === null) return; // bấm Cancel -> không đổi gì
-    ytApiKey = input.trim();
-    if (ytApiKey) {
-      localStorage.setItem(YT_KEY_STORAGE, ytApiKey);
-    } else {
-      localStorage.removeItem(YT_KEY_STORAGE);
-    }
-    refreshYtKeyStatus();
-  });
+  if (ytApiKeyStatus) ytApiKeyStatus.textContent = '';
 
   let ytPlayer = null; // instance YouTube IFrame Player
   let ytApiReady = false;
@@ -1247,31 +1232,54 @@
     });
   }
 
+  async function ytFetchWithKeyRotation(buildUrl) {
+    let lastErrorMsg = '';
+    for (let attempt = 0; attempt < YT_API_KEYS.length; attempt++) {
+      const key = YT_API_KEYS[ytKeyIndex];
+      const url = buildUrl(key);
+      try {
+        const resp = await fetch(url);
+        const data = await resp.json();
+        if (data.error) {
+          const reason = (data.error.errors && data.error.errors[0] && data.error.errors[0].reason) || '';
+          const isQuotaIssue = reason === 'quotaExceeded' || reason === 'dailyLimitExceeded' || reason === 'rateLimitExceeded';
+          if (isQuotaIssue && attempt < YT_API_KEYS.length - 1) {
+            // Key này hết quota -> chuyển sang key kế tiếp và thử lại
+            ytKeyIndex = (ytKeyIndex + 1) % YT_API_KEYS.length;
+            localStorage.setItem(YT_KEY_INDEX_STORAGE, String(ytKeyIndex));
+            lastErrorMsg = data.error.message;
+            continue;
+          }
+          lastErrorMsg = data.error.message || 'Lỗi không xác định.';
+          return { error: lastErrorMsg };
+        }
+        return { data };
+      } catch (err) {
+        lastErrorMsg = 'Lỗi kết nối mạng.';
+      }
+    }
+    return { error: lastErrorMsg || 'Tất cả API key đều không dùng được.' };
+  }
+
   async function doYtSearch() {
-    const key = ytApiKey.trim();
     const q = ytSearchInput.value.trim();
-    if (!key) { ytStatus.textContent = 'Bạn cần dán API key trước.'; return; }
     if (!q) { ytStatus.textContent = 'Nhập từ khóa tìm kiếm.'; return; }
     ytStatus.textContent = 'Đang tìm...';
     ytResults.innerHTML = '';
-    try {
-      const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=10&q=${encodeURIComponent(q)}&key=${encodeURIComponent(key)}`;
-      const resp = await fetch(url);
-      const data = await resp.json();
-      if (data.error) {
-        ytStatus.textContent = 'Lỗi: ' + (data.error.message || 'không tìm được, kiểm tra lại API key.');
-        return;
-      }
-      const items = data.items || [];
-      if (items.length === 0) {
-        ytStatus.textContent = 'Không tìm thấy kết quả.';
-        return;
-      }
-      ytStatus.textContent = `Tìm thấy ${items.length} kết quả.`;
-      renderYtResults(items);
-    } catch (err) {
-      ytStatus.textContent = 'Có lỗi khi gọi API, kiểm tra kết nối mạng.';
+    const result = await ytFetchWithKeyRotation((key) =>
+      `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=10&q=${encodeURIComponent(q)}&key=${encodeURIComponent(key)}`
+    );
+    if (result.error) {
+      ytStatus.textContent = 'Lỗi: ' + result.error;
+      return;
     }
+    const items = result.data.items || [];
+    if (items.length === 0) {
+      ytStatus.textContent = 'Không tìm thấy kết quả.';
+      return;
+    }
+    ytStatus.textContent = `Tìm thấy ${items.length} kết quả.`;
+    renderYtResults(items);
   }
 
   ytSearchBtn.addEventListener('click', doYtSearch);
