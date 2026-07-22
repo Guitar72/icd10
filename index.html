@@ -454,9 +454,9 @@
     position: fixed;
     top: 52px;
     right: 10px;
+    bottom: 10px;
     width: 320px;
     max-width: calc(100vw - 20px);
-    max-height: 70vh;
     overflow-y: auto;
     background: var(--surface);
     border: 1px solid var(--border);
@@ -513,6 +513,39 @@
     accent-color: var(--blue);
     flex-shrink: 0;
   }
+  #ytNowPlaying {
+    position: sticky;
+    bottom: -8px;
+    z-index: 5;
+    box-shadow: 0 -6px 10px -4px rgba(0,0,0,0.5);
+  }
+  .yt-result-row.yt-playing {
+    background: var(--green-light) !important;
+    outline: 1px solid var(--green-border);
+  }
+  .yt-result-row .yt-playing-badge {
+    display: none;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--green);
+    white-space: nowrap;
+    margin-top: 2px;
+  }
+  .yt-result-row.yt-playing .yt-playing-badge { display: inline-block; }
+  #ytLoadMoreBtn {
+    display: block;
+    width: 100%;
+    margin-top: 4px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+    border-radius: 6px;
+    padding: 7px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  #ytLoadMoreBtn:hover { background: #2b3646; }
+  #ytLoadMoreBtn:disabled { opacity: 0.6; cursor: default; }
 </style>
 </head>
 <body>
@@ -1183,6 +1216,9 @@
   let ytShowRemaining = false; // false = hiện thời gian đã chạy, true = hiện thời gian đếm lùi
   let ytShouldBePlaying = false; // ý định của người dùng: có nên đang phát hay không
   let ytUserPaused = false; // người dùng chủ động bấm Tạm dừng (khác với bị hệ điều hành tạm dừng khi chạy nền)
+  let ytCurrentPlayingVid = null; // videoId đang phát, dùng để đánh dấu "Đang phát" trong danh sách
+  let ytCurrentQuery = '';       // từ khóa đang tìm, dùng cho "Xem thêm"
+  let ytNextPageToken = '';      // pageToken cho trang kết quả tiếp theo
 
   function formatYtTime(sec) {
     sec = Math.max(0, Math.floor(sec || 0));
@@ -1318,6 +1354,8 @@
     stopAll();
     ytUserPaused = false;
     ytShowRemaining = false;
+    ytCurrentPlayingVid = videoId;
+    refreshYtPlayingHighlight();
     setupYtMediaSession(title);
     ensureYtIframeApi(() => {
       if (ytPlayer) {
@@ -1368,30 +1406,65 @@
     ytSeekBar.value = 0;
     ytTimeLabel.textContent = '0:00';
     ytPlayPauseBtn.textContent = '▶';
+    ytCurrentPlayingVid = null;
+    refreshYtPlayingHighlight();
     if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
   });
 
-  function renderYtResults(items) {
-    ytResults.innerHTML = items.map((it) => {
-      const vid = it.id.videoId;
-      const title = it.snippet.title;
-      const channel = it.snippet.channelTitle;
-      const thumb = it.snippet.thumbnails && it.snippet.thumbnails.default ? it.snippet.thumbnails.default.url : '';
-      return `
-        <div data-vid="${vid}" data-title="${title.replace(/"/g, '&quot;')}"
-          style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:5px; border-radius:6px; background:var(--surface-2);">
-          <img src="${thumb}" alt="" style="width:44px; height:33px; border-radius:4px; object-fit:cover; flex-shrink:0;">
-          <div style="overflow:hidden;">
-            <div style="font-size:12px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${title}</div>
-            <div style="font-size:11px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${channel}</div>
-          </div>
-        </div>`;
-    }).join('');
+  function ytRowHtml(it) {
+    const vid = it.id.videoId;
+    const title = it.snippet.title;
+    const channel = it.snippet.channelTitle;
+    const thumb = it.snippet.thumbnails && it.snippet.thumbnails.default ? it.snippet.thumbnails.default.url : '';
+    const isPlaying = vid === ytCurrentPlayingVid;
+    return `
+      <div class="yt-result-row${isPlaying ? ' yt-playing' : ''}" data-vid="${vid}" data-title="${title.replace(/"/g, '&quot;')}"
+        style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:5px; border-radius:6px; background:var(--surface-2);">
+        <img src="${thumb}" alt="" style="width:44px; height:33px; border-radius:4px; object-fit:cover; flex-shrink:0;">
+        <div style="overflow:hidden; flex:1;">
+          <div style="font-size:12px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${title}</div>
+          <div style="font-size:11px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${channel}</div>
+          <div class="yt-playing-badge">▶ Đang phát</div>
+        </div>
+      </div>`;
+  }
 
-    ytResults.querySelectorAll('[data-vid]').forEach((row) => {
+  function attachYtRowHandlers(container) {
+    container.querySelectorAll('[data-vid]').forEach((row) => {
       row.addEventListener('click', () => {
         playYoutubeAudioOnly(row.dataset.vid, row.dataset.title);
       });
+    });
+  }
+
+  function renderYtLoadMoreButton() {
+    const old = document.getElementById('ytLoadMoreBtn');
+    if (old) old.remove();
+    if (!ytNextPageToken) return;
+    const btn = document.createElement('button');
+    btn.id = 'ytLoadMoreBtn';
+    btn.textContent = 'Xem thêm';
+    btn.addEventListener('click', doYtLoadMore);
+    ytResults.appendChild(btn);
+  }
+
+  function renderYtResults(items, append) {
+    const html = items.map(ytRowHtml).join('');
+    if (append) {
+      const oldBtn = document.getElementById('ytLoadMoreBtn');
+      if (oldBtn) oldBtn.remove();
+      ytResults.insertAdjacentHTML('beforeend', html);
+    } else {
+      ytResults.innerHTML = html;
+    }
+    attachYtRowHandlers(ytResults);
+    renderYtLoadMoreButton();
+  }
+
+  // Cập nhật lại dấu "Đang phát" trên các mục đã hiển thị mà không cần tải lại danh sách
+  function refreshYtPlayingHighlight() {
+    ytResults.querySelectorAll('.yt-result-row').forEach((row) => {
+      row.classList.toggle('yt-playing', row.dataset.vid === ytCurrentPlayingVid);
     });
   }
 
@@ -1429,6 +1502,8 @@
     if (!q) { ytStatus.textContent = 'Nhập từ khóa tìm kiếm.'; return; }
     ytStatus.textContent = 'Đang tìm...';
     ytResults.innerHTML = '';
+    ytCurrentQuery = q;
+    ytNextPageToken = '';
     const result = await ytFetchWithKeyRotation((key) =>
       `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=10&q=${encodeURIComponent(q)}&key=${encodeURIComponent(key)}`
     );
@@ -1441,8 +1516,26 @@
       ytStatus.textContent = 'Không tìm thấy kết quả.';
       return;
     }
+    ytNextPageToken = result.data.nextPageToken || '';
     ytStatus.textContent = `Tìm thấy ${items.length} kết quả.`;
-    renderYtResults(items);
+    renderYtResults(items, false);
+  }
+
+  async function doYtLoadMore() {
+    if (!ytCurrentQuery || !ytNextPageToken) return;
+    const btn = document.getElementById('ytLoadMoreBtn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Đang tải...'; }
+    const result = await ytFetchWithKeyRotation((key) =>
+      `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=10&pageToken=${encodeURIComponent(ytNextPageToken)}&q=${encodeURIComponent(ytCurrentQuery)}&key=${encodeURIComponent(key)}`
+    );
+    if (result.error) {
+      ytStatus.textContent = 'Lỗi: ' + result.error;
+      if (btn) { btn.disabled = false; btn.textContent = 'Xem thêm'; }
+      return;
+    }
+    const items = result.data.items || [];
+    ytNextPageToken = result.data.nextPageToken || '';
+    renderYtResults(items, true);
   }
 
   ytSearchBtn.addEventListener('click', doYtSearch);
