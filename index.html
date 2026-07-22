@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ICD 10 BY DHA</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230066FF'/%3E%3Crect x='28' y='14' width='8' height='36' rx='3' fill='white'/%3E%3Crect x='14' y='28' width='36' height='8' rx='3' fill='white'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --blue: #5fa8d3;
+    --blue-light: #16293a;
+    --green: #6fcdc4;
+    --green-light: #142826;
+    --green-border: #2a5f5a;
+    --red: #ef5350;
+    --red-dark: #c23a37;
+    --amber: #fbbf24;
+    --amber-dark: #d9a017;
+    --amber-light: #3a2e0f;
+    --border: #2d3748;
+    --text: #e5e7eb;
+    --muted: #94a3b8;
+    --bg: #0b0f17;
+    --surface: #151b26;
+    --surface-2: #1c2431;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 16px;
+  }
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  }
+  .panel h1 {
+    font-size: 16px;
+    margin: 0 0 2px;
+  }
+  .panel .sub {
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .search-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 6px 10px;
+  }
+  .search-row:focus-within {
+    border-color: var(--blue);
+  }
+  .search-row span.icon { color: var(--muted); }
+  .search-row input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 15px;
+    font-family: inherit;
+    background: transparent;
+    color: var(--text);
+  }
+  .search-row button.clear {
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 16px;
+    padding: 2px 6px;
+  }
+  .option-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--muted);
+    user-select: none;
+  }
+  .option-row input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    accent-color: var(--blue);
+    cursor: pointer;
+  }
+  .option-row label {
+    cursor: pointer;
+  }
+  #status {
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+  #dataStatus {
+    font-size: 12.5px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+  }
+  #dataStatus.ok { background: var(--green-light); color: var(--green); }
+  #dataStatus.warn { background: var(--amber-light); color: var(--amber); }
+
+  .results { display: flex; flex-direction: column; gap: 10px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+  }
+
+  /* --- Mã nhóm: chỉ hiện khối gợi ý --- */
+  .children-block summary {
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13.5px;
+    color: var(--blue);
+    list-style: none;
+  }
+  .children-block summary::-webkit-details-marker { display: none; }
+  .children-block summary::before {
+    content: "▾ ";
+  }
+  .child-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .child-btn {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    text-align: left;
+    border: 1px solid var(--green-border);
+    background: var(--green-light);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 7px 10px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13.5px;
+  }
+  .child-btn code {
+    font-weight: 700;
+    color: var(--green);
+    white-space: nowrap;
+  }
+  .child-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .child-row .child-btn {
+    flex: 1 1 auto;
+  }
+  .child-row .copy-btn-inline {
+    flex: 0 0 auto;
+  }
+
+  /* --- Mã cụ thể (mã lá) hiển thị rút gọn trong danh sách --- */
+  .result-btn {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    text-align: left;
+    width: 100%;
+    border: none;
+    background: none;
+    color: var(--text);
+    padding: 0;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+  }
+  .result-btn--dropped code,
+  .result-btn--dropped span,
+  .result-btn--dropped:hover span {
+    color: var(--red);
+  }
+  .inline-warning {
+    margin: 8px 14px 10px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+  .inline-warning--dropped {
+    background: var(--red-dark);
+    color: #fff;
+  }
+  .inline-warning--not-recommended {
+    background: var(--amber-light);
+    color: var(--amber);
+  }
+  .result-btn code {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--blue);
+    background: var(--blue-light);
+    padding: 2px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .result-btn span { color: var(--text); }
+  .result-btn:hover span { color: var(--blue); }
+
+  .result-btn .tag-yhct,
+  .card-top .tag-yhct {
+    font-weight: 700;
+    font-size: 11px;
+    color: #7a4a00 !important;
+    background: #ffe6b3;
+    padding: 2px 6px;
+    border-radius: 6px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    letter-spacing: 0.02em;
+  }
+
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    margin-bottom: 10px;
+  }
+  .back-btn:hover { background: #2b3646; }
+
+  /* --- Mã cụ thể (mã lá) --- */
+  .card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+  .code {
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--blue);
+    background: var(--blue-light);
+    padding: 2px 8px;
+    border-radius: 6px;
+  }
+  .copy-btn {
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 12px;
+    cursor: pointer;
+    color: var(--muted);
+  }
+  .copy-btn:hover { background: #2b3646; }
+  .result-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .copy-btn-inline {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+  .name { font-weight: 600; font-size: 14.5px; margin: 4px 0 2px; }
+  .en { font-style: italic; color: var(--muted); font-size: 12.5px; margin-bottom: 6px; }
+  .banner {
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 12.5px;
+    margin-bottom: 6px;
+  }
+  .banner b { display: block; font-size: 13px; margin-bottom: 2px; }
+  .banner.ok { background: var(--green-light); color: var(--green); }
+  .banner.warn { background: var(--amber-light); color: var(--amber); }
+  .banner.default { background: var(--surface-2); color: var(--muted); }
+  .meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .meta span {
+    font-size: 11.5px;
+    background: var(--surface-2);
+    color: var(--muted);
+    padding: 2px 7px;
+    border-radius: 999px;
+  }
+  .note {
+    margin-top: 8px;
+    font-size: 12.5px;
+    color: var(--muted);
+    white-space: pre-line;
+    border-top: 1px dashed var(--border);
+    padding-top: 6px;
+  }
+
+  .empty {
+    text-align: center;
+    color: var(--muted);
+    padding: 40px 0;
+    font-size: 13.5px;
+  }
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #e5e7eb;
+    color: #0b0f17;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s ease;
+  }
+  .toast.show { opacity: 1; }
+
+  #backToTop {
+    position: fixed;
+    right: 18px;
+    bottom: 24px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    background: var(--blue);
+    color: #fff;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(37,99,235,0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: opacity .2s ease, transform .2s ease;
+    z-index: 999;
+  }
+  #backToTop.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+  #backToTop:hover { background: #1d4ed8; }
+
+  /* --- Widget radio góc trên bên phải --- */
+  .radio-widget {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 5px 8px 5px 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+    font-size: 12px;
+  }
+  .radio-widget .radio-title {
+    font-weight: 700;
+    font-size: 12px;
+    color: var(--blue);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .radio-widget .radio-title-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    filter: brightness(0) invert(1);
+  }
+  .radio-widget button.radio-toggle {
+    border: none;
+    background: var(--blue);
+    color: #fff;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+  .radio-widget button.radio-toggle:hover { background: #4a8fbd; }
+  .radio-widget button.radio-toggle.playing { background: var(--green); }
+  .radio-widget button.radio-toggle.playing:hover { background: #58b8ae; }
+  .radio-widget button#radioStopAll { background: var(--red); }
+  .radio-widget button#radioStopAll:hover { background: var(--red-dark); }
+  .radio-widget .mixer-toggle {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+  }
+  .radio-widget .mixer-toggle input { cursor: pointer; }
+  .radio-widget button.expand-btn {
+    border: 1px solid var(--amber);
+    background: var(--amber);
+    color: #2b2107;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+  .radio-widget button.expand-btn:hover { background: var(--amber-dark); border-color: var(--amber-dark); }
+  .radio-widget button.expand-btn.open { background: var(--amber-dark); color: #2b2107; border-color: var(--amber-dark); }
+  @media (max-width: 480px) {
+    .radio-widget { top: 6px; right: 6px; padding: 4px 6px 4px 8px; gap: 4px; }
+    .radio-widget .radio-title { display: none; }
+    .radio-widget .mixer-toggle span.label { display: none; }
+  }
+
+  .radio-mixer {
+    position: fixed;
+    top: 52px;
+    right: 10px;
+    width: 320px;
+    max-width: calc(100vw - 20px);
+    max-height: 70vh;
+    overflow-y: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+    z-index: 999;
+    display: none;
+    padding: 8px;
+  }
+  .radio-mixer.show { display: block; }
+  .radio-mixer .rm-group-title {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding: 8px 6px 4px;
+  }
+  .track-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px;
+    border-radius: 8px;
+  }
+  .track-row:hover { background: var(--surface-2); }
+  .track-row .track-name {
+    flex: 1;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .track-row button.track-btn {
+    border: none;
+    background: var(--blue);
+    color: #fff;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+  .track-row button.track-btn.playing { background: var(--red); }
+  .track-row input.track-volume {
+    width: 72px;
+    accent-color: var(--blue);
+    flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="radio-widget" id="radioWidget">
+  <span class="radio-title"><img src="https://www.emojiall.com/images/120/telegram/telemoji-november-2023/1f3b5.gif" alt="🎵" class="radio-title-icon"> 24/7</span>
+  <button class="radio-toggle" id="radioPlayMain" title="Phát Trữ Tình">▶</button>
+  <button class="radio-toggle" id="radioStopAll" title="Dừng tất cả">⏹</button>
+  <button class="expand-btn" id="radioExpandBtn" title="Mở danh sách âm thanh">▼</button>
+</div>
+
+<div class="radio-mixer" id="radioMixer">
+  <div class="rm-group-title" style="padding-top:2px;">
+    <label class="mixer-toggle" style="font-size:12px;">
+      <input type="checkbox" id="mixerCheckbox">
+      <span class="label">Mixer (phát nhiều âm cùng lúc)</span>
+    </label>
+  </div>
+  <div class="rm-group-title" style="border-top:1px dashed var(--border); margin-top:4px; padding-top:10px;">RADIO TRỰC TUYẾN</div>
+  <div id="radioTracks"></div>
+  <div class="rm-group-title">ÂM THANH THƯ GIÃN</div>
+  <div id="relaxTracks"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js"></script>
+<script>
+(function () {
+  const CHANNELS = [
+    { id: 'tru-tinh', name: 'Trữ Tình', type: 'stream', url: 'https://cherryradio.com.au/stream/tru-tinh.mp3' },
+    { id: 'voh-am610', name: 'VOH AM 610KHz', type: 'hls', url: 'https://1011337676.vnns.net/-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmkiOiIvaHR2Yy9WT0gtQU02MTAuYWRtLnRtcy8iLCJleHAiOjE5MjQ5MjUyMjh9.dAa1es3LlAVnvQ-oLGNBqfEI0yz7fPrjEML_rJAklMQ-/htvc/VOH-AM610.adm.tms/playlist.m3u8' },
+    { id: 'voh-fm999', name: 'VOH FM 99.9 MHz', type: 'hls', url: 'https://1011337676.vnns.net/-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmkiOiIvaHR2Yy9WT0gtRk05OS45LmFkbS50bXMvIiwiZXhwIjoxOTI0OTI1MjI4fQ.zVLoKcCW3tFLySpEQHcYh11PHIxk2ZE1pj5P-GFIm1I-/htvc/VOH-FM99.9.adm.tms/playlist.m3u8' },
+    { id: 'voh-fm925', name: 'VOH-M FM 92-92.5 MHz', type: 'hls', url: 'https://1011337676.vnns.net/-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmkiOiIvaHR2Yy9WT0gtRk05Mi41LmFkbS50bXMvIiwiZXhwIjoxOTI0OTI1MjI4fQ.u5XcdU9KljAz3HgehDbCBbNEvSzWNAQTEKkU-DwH2K8-/htvc/VOH-FM92.5.adm.tms/playlist.m3u8' },
+    { id: 'voh-fm956', name: 'VOH FM 95.6MHz', type: 'hls', url: 'https://1011337676.vnns.net/-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmkiOiIvaHR2Yy9WT0gtRk05NS42LmFkbS50bXMvIiwiZXhwIjoxOTI0OTI1MjI4fQ.isr2nlUkXOPGSxT-KT8FcZQFCcXn58RZrCyqoB3zDGg-/htvc/VOH-FM95.6.adm.tms/playlist.m3u8' },
+    { id: 'voh-fm877', name: 'VOH FM 87.7MHz', type: 'hls', url: 'https://1011337676.vnns.net/-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmkiOiIvaHR2Yy9WT0gtRk04Ny43LmFkbS50bXMvIiwiZXhwIjoxOTI0OTI1MjI4fQ.uqGbd46T32wvTu5qrL2cOng9Vsf7ZHbSTE10PHpP2bE-/htvc/VOH-FM87.7.adm.tms/playlist.m3u8' },
+  ];
+  const RELAX = [
+    { id: 'td-song-bien-nhe-nhang', name: 'Sóng Biển nhẹ nhàng', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/Tieng-song-bien-nhe-nhang-www_tiengdong_com.mp3' },
+    { id: 'td-song-bien', name: 'Sóng Biển', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/Tieng-song-bien-www_tiengdong_com.mp3' },
+    { id: 'td-song-bien-vo-bo', name: 'Sóng Biển vỗ bờ', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/tieng-song-bien-vo-bo-www_tiengdong_com.mp3' },
+    { id: 'td-song-hai-au', name: 'Sóng biển & Hải Âu', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/Tieng-song-bien-va-tieng-hai-au-keu-www_tiengdong_com.mp3' },
+    { id: 'td-mua-bai-bien', name: 'Mưa trên Bãi biển', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/Tieng-mua-tren-bai-bien-www_tiengdong_com.mp3' },
+    { id: 'td-song-ri-rao', name: 'Sóng Biển rì rào', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/Am-thanh-tieng-song-bien-ri-rao-www_tiengdong_com.mp3' },
+    { id: 'td-am-thanh-thien-nhien', name: 'Âm thanh Thiên Nhiên', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/Am-thanh-thien-nhien-www_tiengdong_com.mp3' },
+    { id: 'td-dong-que', name: 'Đồng Quê thanh bình', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/Tieng-dong-que-thanh-binh-www_tiengdong_com.mp3' },
+    { id: 'td-buoi-sang-trong-lanh', name: 'Buổi sáng Trong lành', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/Am-thanh-buoi-sang-trong-lanh-www_tiengdong_com.mp3' },
+    { id: 'td-chim-hot-suoi-chay', name: 'Chim hót & Suối chảy', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/Tieng-chim-hot-va-tieng-suoi-chay-trong-rung-www_tiengdong_com.mp3' },
+    { id: 'td-nhac-piano-nhe-nhang', name: 'Nhạc nền Piano nhẹ nhàng', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/Nhac-nen-tinh-yeu-dep-cam-dong-nhe-nhang-piano-www_tiengdong_com.mp3' },
+    { id: 'td-song-cuon', name: 'Sóng Cuộn', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/Tieng-song-cuon-www_tiengdong_com.mp3' },
+    { id: 'td-chim-hai-au-song-bien', name: 'Chim Hải Âu & Sóng Biển', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/Tieng-chim-hai-au-keu-va-tieng-song-bien-www_tiengdong_com.mp3' },
+    { id: 'td-gio-bien-song-mua-he', name: 'Gió biển và Sóng mùa hè', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/Am-thanh-gio-bien-va-song-mua-he-www_tiengdong_com.mp3' },
+    { id: 'td-song-bien-vo-vao-bo', name: 'Sóng biển Vỗ vào bờ', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/Tieng-song-bien-vo-vao-bo-www_tiengdong_com.mp3' },
+    { id: 'td-mua-dot-mai-gac-xep', name: 'Mưa dột mái Gác xép', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/Tieng-nuoc-mua-dot-mai-ben-trong-can-gac-xep-www_tiengdong_com.mp3' },
+    { id: 'td-troi-mua-nhe', name: 'Trời Mưa nhẹ', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/Tieng-troi-mua-nhe-www_tiengdong_com.mp3' },
+    { id: 'td-moi-truong-rung', name: 'Môi trường Tự nhiên trong Rừng', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/Am-thanh-moi-truong-tu-nhien-trong-rung-www_tiengdong_com.mp3' },
+    { id: 'td-dong-vat-rung-ram', name: 'Kêu của các loài Động Vật trong rừng rậm', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/Tieng-keu-cua-cac-loai-dong-vat-khac-nhau-trong-rung-ram-www_tiengdong_com.mp3' },
+    { id: 'td-chim-hot-cong-vien', name: 'Chim hót trong Công viên thành phố', type: 'mp3', url: 'https://tiengdong.com/wp-content/uploads/tieng-chim-hot-trong-cong-vien-thanh-pho-www_tiengdong_com.mp3' },
+  ];
+
+  function showToast(msg) {
+    const toastEl = document.getElementById('toast');
+    if (!toastEl) return;
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    setTimeout(() => toastEl.classList.remove('show'), 1500);
+  }
+
+  let audioCtx = null;
+  function getCtx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+
+  function makeNoiseBuffer(ctx, kind) {
+    const seconds = 4;
+    const len = ctx.sampleRate * seconds;
+    const buffer = ctx.createBuffer(1, len, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    if (kind === 'brown') {
+      let last = 0;
+      for (let i = 0; i < len; i++) {
+        const white = Math.random() * 2 - 1;
+        last = (last + 0.02 * white) / 1.02;
+        data[i] = last * 3.5;
+      }
+    } else if (kind === 'pink') {
+      let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0;
+      for (let i = 0; i < len; i++) {
+        const white = Math.random() * 2 - 1;
+        b0 = 0.99886*b0 + white*0.0555179;
+        b1 = 0.99332*b1 + white*0.0750759;
+        b2 = 0.96900*b2 + white*0.1538520;
+        b3 = 0.86650*b3 + white*0.3104856;
+        b4 = 0.55000*b4 + white*0.5329522;
+        b5 = -0.7616*b5 - white*0.0168980;
+        const out = b0+b1+b2+b3+b4+b5+b6+white*0.5362;
+        b6 = white*0.115926;
+        data[i] = out * 0.11;
+      }
+    } else {
+      for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+    }
+    return buffer;
+  }
+
+  // --- Lịch phát sự kiện ngẫu nhiên (crackle, sấm, tiếng dế/ếch...) ---
+  function scheduleEvents(genEvent, minGapMs, maxGapMs) {
+    let stopped = false;
+    let timer = null;
+    function tick() {
+      if (stopped) return;
+      try { genEvent(); } catch (e) {}
+      const wait = minGapMs + Math.random() * (maxGapMs - minGapMs);
+      timer = setTimeout(tick, wait);
+    }
+    timer = setTimeout(tick, minGapMs + Math.random() * (maxGapMs - minGapMs));
+    return {
+      stop() {
+        stopped = true;
+        if (timer) clearTimeout(timer);
+      },
+    };
+  }
+
+  // Tiếng nổ lách tách ngắn (lò sưởi)
+  function playCrackle(ctx, dest, opts) {
+    const o = opts || {};
+    const freqMin = o.freqMin || 900, freqMax = o.freqMax || 3200;
+    const durMin = o.durMin || 0.02, durMax = o.durMax || 0.07;
+    const gainMin = o.gainMin || 0.08, gainMax = o.gainMax || 0.3;
+    const dur = durMin + Math.random() * (durMax - durMin);
+    const len = Math.max(1, Math.floor(ctx.sampleRate * dur));
+    const buffer = ctx.createBuffer(1, len, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = freqMin + Math.random() * (freqMax - freqMin);
+    bp.Q.value = 4 + Math.random() * 4;
+    const g = ctx.createGain();
+    const peak = gainMin + Math.random() * (gainMax - gainMin);
+    const now = ctx.currentTime;
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(peak, now + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    src.connect(bp); bp.connect(g); g.connect(dest);
+    src.start(now);
+    src.stop(now + dur + 0.02);
+  }
+
+  // Tiếng sấm xa (giông bão)
+  function playThunder(ctx, dest) {
+    const dur = 2 + Math.random() * 3;
+    const len = Math.floor(ctx.sampleRate * dur);
+    const buffer = ctx.createBuffer(1, len, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    let last = 0;
+    for (let i = 0; i < len; i++) {
+      const white = Math.random() * 2 - 1;
+      last = (last + 0.02 * white) / 1.02;
+      data[i] = last * 3.5;
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 150 + Math.random() * 100;
+    const g = ctx.createGain();
+    const now = ctx.currentTime;
+    const peak = 0.4 + Math.random() * 0.3;
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(peak, now + 0.3 + Math.random() * 0.5);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    src.connect(lp); lp.connect(g); g.connect(dest);
+    src.start(now);
+    src.stop(now + dur + 0.1);
+  }
+
+  // Một tiếng "chip" ngắn (dùng cho dế/ếch)
+  function playChirp(ctx, dest, opts) {
+    const o = opts || {};
+    const freq = o.freq || 4200;
+    const dur = o.dur || 0.06;
+    const gainVal = o.gain || 0.15;
+    const glide = o.glide || 0;
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    const now = ctx.currentTime;
+    osc.frequency.setValueAtTime(freq, now);
+    if (glide) osc.frequency.linearRampToValueAtTime(freq + glide, now + dur * 0.7);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(gainVal, now + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    osc.connect(g); g.connect(dest);
+    osc.start(now);
+    osc.stop(now + dur + 0.02);
+  }
+
+  // Một cụm tiếng dế kêu rộ (nhiều chip liên tiếp rất nhanh)
+  function playCricketBurst(ctx, dest) {
+    const n = 4 + Math.floor(Math.random() * 5);
+    const baseFreq = 4000 + Math.random() * 600;
+    for (let i = 0; i < n; i++) {
+      setTimeout(() => {
+        playChirp(ctx, dest, { freq: baseFreq + (Math.random() * 100 - 50), dur: 0.035, gain: 0.12 });
+      }, i * 33);
+    }
+  }
+
+  // Một tiếng ếch kêu (peep), cao và có lướt nhẹ lên
+  function playPeep(ctx, dest) {
+    const freq = 2800 + Math.random() * 500;
+    playChirp(ctx, dest, { freq, dur: 0.22, gain: 0.18, glide: freq * 0.15 });
+  }
+
+  function buildNoiseGraph(ctx, kind, gainNode) {
+    // Các âm nhiễu liên tục cơ bản
+    if (kind === 'white' || kind === 'pink' || kind === 'brown') {
+      const src = ctx.createBufferSource();
+      src.buffer = makeNoiseBuffer(ctx, kind);
+      src.loop = true;
+      src.connect(gainNode);
+      src.start();
+      return { stop() { try { src.stop(); } catch (e) {} } };
+    }
+
+    if (kind === 'rain') {
+      const src = ctx.createBufferSource();
+      src.buffer = makeNoiseBuffer(ctx, 'white');
+      src.loop = true;
+      const hp = ctx.createBiquadFilter();
+      hp.type = 'highpass';
+      hp.frequency.value = 1200;
+      const lp = ctx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = 6000;
+      src.connect(hp); hp.connect(lp); lp.connect(gainNode);
+      src.start();
+      return { stop() { try { src.stop(); } catch (e) {} } };
+    }
+
+    if (kind === 'waves') {
+      const src = ctx.createBufferSource();
+      src.buffer = makeNoiseBuffer(ctx, 'white');
+      src.loop = true;
+      const lp = ctx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = 500;
+      const lfo = ctx.createOscillator();
+      lfo.frequency.value = 0.15;
+      const lfoGain = ctx.createGain();
+      lfoGain.gain.value = 300;
+      lfo.connect(lfoGain); lfoGain.connect(lp.frequency);
+      lfo.start();
+      src.connect(lp); lp.connect(gainNode);
+      src.start();
+      return { stop() { try { src.stop(); } catch (e) {} try { lfo.stop(); } catch (e) {} } };
+    }
+
+    // Tiếng ồn nâu làm mượt: lọc thông thấp mạnh hơn cho êm tai khi nghe lâu
+    if (kind === 'brown-smooth') {
+      const src = ctx.createBufferSource();
+      src.buffer = makeNoiseBuffer(ctx, 'brown');
+      src.loop = true;
+      const lp = ctx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = 700;
+      src.connect(lp); lp.connect(gainNode);
+      src.start();
+      return { stop() { try { src.stop(); } catch (e) {} } };
+    }
+
+    // Tiếng ồn nâu sâu kèm lớp tinh chỉnh 432 Hz rất nhẹ
+    if (kind === 'brown-432hz') {
+      const src = ctx.createBufferSource();
+      src.buffer = makeNoiseBuffer(ctx, 'brown');
+      src.loop = true;
+      const lp = ctx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = 550;
+      src.connect(lp); lp.connect(gainNode);
+      src.start();
+
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = 432;
+      const toneGain = ctx.createGain();
+      toneGain.gain.value = 0.05;
+      osc.connect(toneGain); toneGain.connect(gainNode);
+      osc.start();
+
+      return {
+        stop() {
+          try { src.stop(); } catch (e) {}
+          try { osc.stop(); } catch (e) {}
+        },
+      };
+    }
+
+    // Lò sưởi: nền rì rầm trầm + tiếng nổ lách tách ngẫu nhiên
+    if (kind === 'fireplace') {
+      const rumbleSrc = ctx.createBufferSource();
+      rumbleSrc.buffer = makeNoiseBuffer(ctx, 'brown');
+      rumbleSrc.loop = true;
+      const lp = ctx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = 280;
+      const rumbleGain = ctx.createGain();
+      rumbleGain.gain.value = 0.35;
+      rumbleSrc.connect(lp); lp.connect(rumbleGain); rumbleGain.connect(gainNode);
+      rumbleSrc.start();
+
+      const scheduler = scheduleEvents(() => {
+        playCrackle(ctx, gainNode, { freqMin: 900, freqMax: 3200, durMin: 0.02, durMax: 0.07, gainMin: 0.08, gainMax: 0.3 });
+      }, 90, 320);
+
+      return {
+        stop() {
+          try { rumbleSrc.stop(); } catch (e) {}
+          scheduler.stop();
+        },
+      };
+    }
+
+    // Giông bão: mưa liên tục + tiếng sấm xa thỉnh thoảng
+    if (kind === 'thunderstorm') {
+      const rainSrc = ctx.createBufferSource();
+      rainSrc.buffer = makeNoiseBuffer(ctx, 'white');
+      rainSrc.loop = true;
+      const hp = ctx.createBiquadFilter();
+      hp.type = 'highpass';
+      hp.frequency.value = 1200;
+      const lpRain = ctx.createBiquadFilter();
+      lpRain.type = 'lowpass';
+      lpRain.frequency.value = 6000;
+      const rainGain = ctx.createGain();
+      rainGain.gain.value = 0.6;
+      rainSrc.connect(hp); hp.connect(lpRain); lpRain.connect(rainGain); rainGain.connect(gainNode);
+      rainSrc.start();
+
+      const scheduler = scheduleEvents(() => {
+        playThunder(ctx, gainNode);
+      }, 7000, 18000);
+
+      return {
+        stop() {
+          try { rainSrc.stop(); } catch (e) {}
+          scheduler.stop();
+        },
+      };
+    }
+
+    // Đêm — tiếng dế: nền không khí đêm tĩnh + từng cụm dế kêu
+    if (kind === 'night') {
+      const bedSrc = ctx.createBufferSource();
+      bedSrc.buffer = makeNoiseBuffer(ctx, 'brown');
+      bedSrc.loop = true;
+      const lp = ctx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = 400;
+      const bedGain = ctx.createGain();
+      bedGain.gain.value = 0.12;
+      bedSrc.connect(lp); lp.connect(bedGain); bedGain.connect(gainNode);
+      bedSrc.start();
+
+      const scheduler = scheduleEvents(() => {
+        playCricketBurst(ctx, gainNode);
+      }, 500, 1600);
+
+      return {
+        stop() {
+          try { bedSrc.stop(); } catch (e) {}
+          scheduler.stop();
+        },
+      };
+    }
+
+    // Quán cà phê: tiếng nhiễu lọc dải trung, âm lượng lên xuống chậm như tiếng trò chuyện rì rầm
+    if (kind === 'people') {
+      const src = ctx.createBufferSource();
+      src.buffer = makeNoiseBuffer(ctx, 'white');
+      src.loop = true;
+      const bp = ctx.createBiquadFilter();
+      bp.type = 'bandpass';
+      bp.frequency.value = 1100;
+      bp.Q.value = 0.6;
+      const murmurGain = ctx.createGain();
+      murmurGain.gain.value = 0.5;
+      const lfo = ctx.createOscillator();
+      lfo.frequency.value = 0.15;
+      const lfoGain = ctx.createGain();
+      lfoGain.gain.value = 0.2;
+      lfo.connect(lfoGain); lfoGain.connect(murmurGain.gain);
+      lfo.start();
+      src.connect(bp); bp.connect(murmurGain); murmurGain.connect(gainNode);
+      src.start();
+
+      return {
+        stop() {
+          try { src.stop(); } catch (e) {}
+          try { lfo.stop(); } catch (e) {}
+        },
+      };
+    }
+
+    // Tiếng ếch ban đêm: nền không khí đêm nhẹ + từng tiếng ếch kêu cao vút
+    if (kind === 'spring-peeper') {
+      const bedSrc = ctx.createBufferSource();
+      bedSrc.buffer = makeNoiseBuffer(ctx, 'brown');
+      bedSrc.loop = true;
+      const lp = ctx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = 350;
+      const bedGain = ctx.createGain();
+      bedGain.gain.value = 0.1;
+      bedSrc.connect(lp); lp.connect(bedGain); bedGain.connect(gainNode);
+      bedSrc.start();
+
+      const scheduler = scheduleEvents(() => {
+        playPeep(ctx, gainNode);
+      }, 650, 1300);
+
+      return {
+        stop() {
+          try { bedSrc.stop(); } catch (e) {}
+          scheduler.stop();
+        },
+      };
+    }
+
+    // Dự phòng: tiếng ồn trắng thường
+    const src = ctx.createBufferSource();
+    src.buffer = makeNoiseBuffer(ctx, 'white');
+    src.loop = true;
+    src.connect(gainNode);
+    src.start();
+    return { stop() { try { src.stop(); } catch (e) {} } };
+  }
+
+  function createHtmlRow(track, container, playRow, defaultVolume) {
+    const row = document.createElement('div');
+    row.className = 'track-row';
+    row.dataset.trackId = track.id;
+    const dv = typeof defaultVolume === 'number' ? defaultVolume : 70;
+    row.innerHTML =
+      '<button class="track-btn" title="Phát/Dừng">▶</button>' +
+      '<span class="track-name">' + track.name + '</span>' +
+      '<input type="range" class="track-volume" min="0" max="100" value="' + dv + '">';
+    container.appendChild(row);
+    const btn = row.querySelector('.track-btn');
+    const vol = row.querySelector('.track-volume');
+    btn.addEventListener('click', () => playRow(track, btn, vol));
+    vol.addEventListener('input', () => {
+      const active = activeTracks[track.id];
+      if (active && active.setVolume) active.setVolume(vol.value / 100);
+    });
+    return { row, btn, vol };
+  }
+
+  const radioTrackEls = document.getElementById('radioTracks');
+  const relaxTrackEls = document.getElementById('relaxTracks');
+  const mixerCheckbox = document.getElementById('mixerCheckbox');
+  const mainPlayBtn = document.getElementById('radioPlayMain');
+
+  const activeTracks = {}; // id -> {stop, btn, setVolume}
+  const rowRefs = {}; // id -> {btn, vol}
+
+  function updateMainButton() {
+    const anyPlaying = Object.keys(activeTracks).length > 0;
+    mainPlayBtn.textContent = anyPlaying ? '⏸' : '▶';
+    mainPlayBtn.classList.toggle('playing', anyPlaying);
+  }
+
+  function setBtnPlaying(id, playing) {
+    const ref = rowRefs[id];
+    if (ref) {
+      ref.btn.textContent = playing ? '⏹' : '▶';
+      ref.btn.classList.toggle('playing', playing);
+    }
+    updateMainButton();
+  }
+
+  function stopTrack(id) {
+    const t = activeTracks[id];
+    if (!t) return;
+    t.stop();
+    delete activeTracks[id];
+    setBtnPlaying(id, false);
+  }
+
+  function stopAllExcept(exceptId) {
+    Object.keys(activeTracks).forEach((id) => { if (id !== exceptId) stopTrack(id); });
+  }
+
+  function stopAll() { stopAllExcept(null); }
+
+  // Radio channel rows
+  const channelAudioEls = {};
+  function playChannel(ch, volValue) {
+    if (!mixerCheckbox.checked) stopAllExcept(null);
+    let entry = channelAudioEls[ch.id];
+    if (!entry) {
+      const audioEl = new Audio();
+      audioEl.preload = 'none';
+      let hls = null;
+      if (ch.type === 'hls') {
+        if (window.Hls && Hls.isSupported()) {
+          hls = new Hls();
+          hls.loadSource(ch.url);
+          hls.attachMedia(audioEl);
+        } else if (audioEl.canPlayType('application/vnd.apple.mpegurl')) {
+          audioEl.src = ch.url;
+        } else {
+          showToast('Trình duyệt không hỗ trợ phát kênh này');
+          return;
+        }
+      } else {
+        audioEl.src = ch.url;
+        audioEl.loop = true;
+      }
+      entry = { audioEl };
+      channelAudioEls[ch.id] = entry;
+    }
+    entry.audioEl.volume = volValue;
+    entry.audioEl.play().catch(() => {
+      showToast('Không phát được kênh ' + ch.name);
+      stopTrack(ch.id);
+    });
+    activeTracks[ch.id] = {
+      stop: () => { entry.audioEl.pause(); },
+      setVolume: (v) => { entry.audioEl.volume = v; },
+    };
+    setBtnPlaying(ch.id, true);
+  }
+
+  CHANNELS.forEach((ch) => {
+    const refs = createHtmlRow(ch, radioTrackEls, (track, btn, volEl) => {
+      if (activeTracks[ch.id]) { stopTrack(ch.id); return; }
+      playChannel(ch, volEl.value / 100);
+    });
+    rowRefs[ch.id] = refs;
+  });
+
+  // Nhóm "Âm thanh thư giãn" — phát mp3 giống kênh radio
+  RELAX.forEach((track) => {
+    const refs = createHtmlRow(track, relaxTrackEls, (t, btn, volEl) => {
+      if (activeTracks[t.id]) { stopTrack(t.id); return; }
+      playChannel(t, volEl.value / 100);
+    }, 70);
+    rowRefs[track.id] = refs;
+  });
+
+  document.getElementById('radioStopAll').addEventListener('click', stopAll);
+
+  // Nút Play chính -> phát/dừng kênh Trữ Tình mặc định
+  mainPlayBtn.addEventListener('click', () => {
+    const activeIds = Object.keys(activeTracks);
+    if (activeIds.length > 0) {
+      activeIds.forEach(stopTrack);
+    } else {
+      const ch = CHANNELS.find((c) => c.id === 'tru-tinh');
+      const ref = rowRefs['tru-tinh'];
+      playChannel(ch, ref ? ref.vol.value / 100 : 0.7);
+    }
+  });
+
+  // Mixer checkbox: turning OFF while several tracks play -> keep only the first one playing
+  mixerCheckbox.addEventListener('change', () => {
+    if (!mixerCheckbox.checked) {
+      const ids = Object.keys(activeTracks);
+      if (ids.length > 1) {
+        ids.slice(1).forEach(stopTrack);
+      }
+    }
+  });
+
+  // Expand/collapse mixer panel
+  const expandBtn = document.getElementById('radioExpandBtn');
+  const mixerPanel = document.getElementById('radioMixer');
+  expandBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = mixerPanel.classList.toggle('show');
+    expandBtn.textContent = isOpen ? '▲' : '▼';
+    expandBtn.classList.toggle('open', isOpen);
+  });
+  document.addEventListener('click', (e) => {
+    if (!mixerPanel.classList.contains('show')) return;
+    const insidePanel = mixerPanel.contains(e.target);
+    const insideWidget = document.getElementById('radioWidget').contains(e.target);
+    if (!insidePanel && !insideWidget) {
+      mixerPanel.classList.remove('show');
+      expandBtn.textContent = '▼';
+      expandBtn.classList.remove('open');
+    }
+  });
+})();
+</script>
+
+<div class="wrap">
+  <div class="panel">
+    <h1>Tra cứu ICD-10 (Áp dụng theo TT06/2026/TT-BYT bởi DHA)</h1>
+    <div class="sub"></div>
+    <div class="search-row">
+      <span class="icon">⌕</span>
+      <input id="searchInput" placeholder="Tìm mã ICD hoặc tên bệnh: A09, E11.9, tăng huyết áp..." autocomplete="off" spellcheck="false">
+      <button class="clear" id="clearBtn" title="Xoá">✕</button>
+    </div>
+    <div class="option-row">
+      <input type="checkbox" id="yhctToggle">
+      <label for="yhctToggle">Chỉ hiển thị mã bệnh YHCT</label>
+    </div>
+    <div id="status"></div>
+  </div>
+
+  <div id="dataStatus"></div>
+
+  <div class="results" id="results"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<button id="backToTop" title="Lên đầu trang" aria-label="Lên đầu trang">↑</button>
+
+<!-- Dữ liệu ICD-10 (Tây y) + Dữ liệu mã bệnh YHCT (xuất ra từ script extract-icd-data.js) -->
+<script src="icd-data.js"></script>
+<script src="icd-yhct-data.js"></script>
+<script>
+(function () {
+  const ICD_DATA = (window.ICD_DATA || []);
+  const YHCT_DATA = (window.ICD_YHCT_DATA || []);
+
+  const dataStatusEl = document.getElementById('dataStatus');
+  if (ICD_DATA.length === 0 && YHCT_DATA.length === 0) {
+    dataStatusEl.className = 'warn';
+    dataStatusEl.textContent =
+      '⚠ Chưa có dữ liệu. Hãy dùng script "extract-icd-data.js" để trích xuất dữ liệu từ trang gốc, ' +
+      'lưu thành file "icd-data.js" / "icd-yhct-data.js" và đặt cùng thư mục với file HTML này.';
+  } else {
+    dataStatusEl.style.display = 'none';
+  }
+
+  // Chuẩn hoá chuỗi tiếng Việt để tìm kiếm không dấu
+  function normalize(str) {
+    return (str || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd');
+  }
+
+  // Tiền xử lý: tạo trường tìm kiếm chuẩn hoá 1 lần cho hiệu năng
+  // Mỗi phần tử được gắn thêm `_type` để phân biệt mã Tây y ('icd') và mã YHCT ('yhct')
+  const searchIndex = [
+    ...ICD_DATA.map((item) => ({
+      item: { ...item, _type: 'icd' },
+      codeNorm: normalize(item.code),
+      nameNorm: normalize(item.name),
+      enNorm: normalize(item.en),
+    })),
+    ...YHCT_DATA.map((item) => ({
+      item: { ...item, _type: 'yhct' },
+      codeNorm: normalize(item.code),
+      // với mã YHCT, tìm theo cả tên YHCT, tên bệnh hiện đại và mã ICD-10 tương ứng
+      nameNorm: normalize(item.name) + ' ' + normalize(item.modernName) + ' ' + normalize(item.icd10),
+      enNorm: '',
+    })),
+  ];
+
+  const input = document.getElementById('searchInput');
+  const clearBtn = document.getElementById('clearBtn');
+  const yhctToggle = document.getElementById('yhctToggle');
+  const resultsEl = document.getElementById('results');
+  const statusEl = document.getElementById('status');
+  const toastEl = document.getElementById('toast');
+
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    setTimeout(() => toastEl.classList.remove('show'), 1200);
+  }
+
+  function copyText(text) {
+    navigator.clipboard?.writeText(text).then(() => showToast('Đã copy: ' + text));
+  }
+
+  function renderYhctListItem(item) {
+    const isRemoved = !!item.removed;
+    const warnClass = isRemoved ? ' result-btn--dropped' : '';
+    const inlineWarningHtml = isRemoved
+      ? `<div class="inline-warning inline-warning--dropped">${escapeHtml(item.statusTitle || 'Không sử dụng')}${item.removedNote ? ' — ' + escapeHtml(item.removedNote) : ''}</div>`
+      : '';
+    return `
+      <div class="card">
+        <div class="result-row">
+          <button class="result-btn${warnClass}" data-code="${escapeAttr(item.code)}" data-type="yhct">
+            <span class="tag-yhct">YHCT</span>
+            <code>${escapeHtml(item.code)}</code>
+            <span>${escapeHtml(item.name)}${item.modernName ? ' — ' + escapeHtml(item.modernName) : ''}</span>
+          </button>
+          ${!isRemoved ? `<button class="copy-btn copy-btn-inline" data-copy="${escapeAttr(item.code)}">Copy mã</button>` : ''}
+        </div>
+        ${inlineWarningHtml}
+      </div>`;
+  }
+
+  function renderListItem(item) {
+    if (item._type === 'yhct') {
+      return renderYhctListItem(item);
+    }
+
+    const hasChildren = item.children && item.children.length > 0;
+
+    if (hasChildren) {
+      // Mã nhóm -> chỉ hiện khối gợi ý mã cụ thể hơn
+      const childrenHtml = item.children
+        .map(
+          (c) =>
+            `<div class="child-row">
+               <button class="child-btn" data-code="${escapeAttr(c.code)}">
+                 <code>${escapeHtml(c.code)}</code>
+                 <span>${escapeHtml(c.name)}</span>
+               </button>
+               <button class="copy-btn copy-btn-inline" data-copy="${escapeAttr(c.code)}">Copy mã</button>
+             </div>`
+        )
+        .join('');
+      return `
+        <div class="card">
+          <details class="children-block" open>
+            <summary>Gợi ý mã cụ thể hơn có thể dùng làm bệnh chính (${item.children.length})</summary>
+            <div class="child-list">${childrenHtml}</div>
+          </details>
+        </div>`;
+    }
+
+    // Mã cụ thể (mã lá) -> chỉ hiện rút gọn, bấm vào mới xem chi tiết
+    // Nếu mã có cảnh báo (statusTitle) thì hiện luôn ngoài danh sách, không cần bấm vào chi tiết
+    const isDropped = item.statusTitle === 'Cần chọn mã cụ thể hơn';
+    const isNotRecommended = item.statusTitle === 'Không khuyến khích dùng làm bệnh chính';
+    const warnClass = isDropped ? ' result-btn--dropped' : (isNotRecommended ? ' result-btn--not-recommended' : '');
+    const inlineWarningHtml = isDropped
+      ? '<div class="inline-warning inline-warning--dropped">Đã bỏ mã, cần chọn mã cụ thể hơn</div>'
+      : (isNotRecommended
+          ? '<div class="inline-warning inline-warning--not-recommended">Không khuyến khích dùng làm bệnh chính</div>'
+          : '');
+
+    return `
+      <div class="card">
+        <div class="result-row">
+          <button class="result-btn${warnClass}" data-code="${escapeAttr(item.code)}">
+            <code>${escapeHtml(item.code)}</code>
+            <span>${escapeHtml(item.name)}</span>
+          </button>
+          ${!isDropped ? `<button class="copy-btn copy-btn-inline" data-copy="${escapeAttr(item.code)}">Copy mã</button>` : ''}
+        </div>
+        ${inlineWarningHtml}
+      </div>`;
+  }
+
+  function renderYhctDetail(item) {
+    const bannerClass = item.removed ? 'warn' : (item.status === 'warn' ? 'warn' : 'ok');
+    const bannerHtml = item.statusTitle
+      ? `<div class="banner ${bannerClass}"><b>${escapeHtml(item.statusTitle)}</b>${
+          (item.statusDesc || item.removedNote)
+            ? '<span>' + escapeHtml(item.statusDesc || '') + (item.removedNote ? ' ' + escapeHtml(item.removedNote) : '') + '</span>'
+            : ''
+        }</div>`
+      : '';
+    return `
+      <button class="back-btn" id="backToListBtn" title="Quay lại danh sách kết quả">← Quay lại</button>
+      <div class="card">
+        <div class="card-top">
+          <span class="tag-yhct">YHCT</span>
+          <span class="code">${escapeHtml(item.code)}</span>
+          <button class="copy-btn" data-copy="${escapeAttr(item.code)}">Copy mã</button>
+        </div>
+        <div class="name">${escapeHtml(item.name)}</div>
+        ${item.modernName ? `<div class="en">Tên hiện đại: ${escapeHtml(item.modernName)}</div>` : ''}
+        ${item.icd10 ? `<div class="en">Mã ICD-10 tương ứng: ${escapeHtml(item.icd10)}</div>` : ''}
+        ${bannerHtml}
+      </div>`;
+  }
+
+  function renderDetail(item) {
+    if (item._type === 'yhct') {
+      return renderYhctDetail(item);
+    }
+    const bannerClass =
+      item.status === 'ok' ? 'ok' : item.status === 'warn' ? 'warn' : 'default';
+    const bannerHtml = item.statusTitle
+      ? `<div class="banner ${bannerClass}"><b>${escapeHtml(item.statusTitle)}</b>${
+          item.statusDesc ? '<span>' + escapeHtml(item.statusDesc) + '</span>' : ''
+        }</div>`
+      : '';
+    const metaHtml = (item.meta || [])
+      .map((m) => `<span>${escapeHtml(m)}</span>`)
+      .join('');
+    const noteHtml = item.note ? `<div class="note">${item.note}</div>` : '';
+
+    return `
+      <button class="back-btn" id="backToListBtn" title="Quay lại danh sách kết quả">← Quay lại</button>
+      <div class="card">
+        <div class="card-top">
+          <span class="code">${escapeHtml(item.code)}</span>
+          <button class="copy-btn" data-copy="${escapeAttr(item.code)}">Copy mã</button>
+        </div>
+        <div class="name">${escapeHtml(item.name)}</div>
+        ${item.en ? `<div class="en">${escapeHtml(item.en)}</div>` : ''}
+        ${bannerHtml}
+        <div class="meta">${metaHtml}</div>
+        ${noteHtml}
+      </div>`;
+  }
+
+  function escapeHtml(str) {
+    return (str || '').replace(/[&<>"']/g, (c) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    }[c]));
+  }
+  function escapeAttr(str) { return escapeHtml(str); }
+
+  let currentMatches = [];
+
+  function doSearch(query) {
+    const q = normalize(query.trim());
+    if (!q) {
+      currentMatches = [];
+      resultsEl.innerHTML = '';
+      statusEl.textContent = '';
+      return;
+    }
+
+    const yhctOnly = !!(yhctToggle && yhctToggle.checked);
+    const matches = searchIndex.filter(
+      (row) =>
+        (!yhctOnly || row.item._type === 'yhct') &&
+        (row.codeNorm.includes(q) || row.nameNorm.includes(q) || row.enNorm.includes(q))
+    );
+
+    // Nếu 1 mã nhóm (có children) khớp tìm kiếm, ẩn bớt các mã con của nó
+    // để tránh hiện trùng lặp (mã con đã nằm trong khối gợi ý màu xanh lá).
+    const childCodesToHide = new Set();
+    matches.forEach((row) => {
+      if (row.item.children && row.item.children.length > 0) {
+        row.item.children.forEach((c) => childCodesToHide.add(c.code));
+      }
+    });
+    const dedupedMatches = matches.filter(
+      (row) =>
+        (row.item.children && row.item.children.length > 0) ||
+        !childCodesToHide.has(row.item.code)
+    );
+    currentMatches = dedupedMatches;
+
+    statusEl.textContent = `Tìm thấy ${dedupedMatches.length.toLocaleString('vi-VN')} kết quả cho "${query}"`;
+
+    if (dedupedMatches.length === 0) {
+      resultsEl.innerHTML = '<div class="empty">Không tìm thấy mã hoặc bệnh phù hợp.</div>';
+      return;
+    }
+
+    showList(dedupedMatches);
+  }
+
+  function showList(matches) {
+    // Giới hạn hiển thị để không lag khi query quá ngắn / trùng nhiều
+    const MAX_SHOW = 200;
+    const shown = matches.slice(0, MAX_SHOW);
+    resultsEl.innerHTML = shown.map((row) => renderListItem(row.item)).join('');
+    if (matches.length > MAX_SHOW) {
+      resultsEl.insertAdjacentHTML(
+        'beforeend',
+        `<div class="empty">Chỉ hiển thị ${MAX_SHOW} / ${matches.length} kết quả đầu tiên. Hãy nhập cụ thể hơn.</div>`
+      );
+    }
+  }
+
+  function showDetail(item) {
+    resultsEl.innerHTML = renderDetail(item);
+  }
+
+  input.addEventListener('input', () => doSearch(input.value));
+  if (yhctToggle) {
+    yhctToggle.addEventListener('change', () => doSearch(input.value));
+  }
+  clearBtn.addEventListener('click', () => {
+    input.value = '';
+    doSearch('');
+    input.focus();
+  });
+
+  // Click vào mã con gợi ý -> tìm luôn mã đó
+  resultsEl.addEventListener('click', (e) => {
+    const backBtn = e.target.closest('#backToListBtn');
+    if (backBtn) {
+      showList(currentMatches);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    const resultBtn = e.target.closest('.result-btn');
+    if (resultBtn) {
+      const code = resultBtn.dataset.code;
+      const type = resultBtn.dataset.type || 'icd';
+      const found = searchIndex.find((row) => row.item.code === code && row.item._type === type);
+      if (found) {
+        showDetail(found.item);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      return;
+    }
+
+    const childBtn = e.target.closest('.child-btn');
+    if (childBtn) {
+      const code = childBtn.dataset.code;
+      // Mã con gợi ý luôn thuộc dữ liệu ICD-10 (Tây y)
+      const found = searchIndex.find((row) => row.item.code === code && row.item._type === 'icd');
+      if (found) {
+        showDetail(found.item);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      return;
+    }
+    const copyBtn = e.target.closest('.copy-btn');
+    if (copyBtn) {
+      copyText(copyBtn.dataset.copy);
+    }
+  });
+
+  // Phím tắt "/" để focus ô tìm kiếm
+  document.addEventListener('keydown', (e) => {
+    if (e.key === '/' && document.activeElement !== input) {
+      e.preventDefault();
+      input.focus();
+    }
+  });
+
+  input.focus();
+
+  // Nút cuộn lên đầu trang
+  const backToTopBtn = document.getElementById('backToTop');
+  function toggleBackToTop() {
+    if (window.scrollY > 300) {
+      backToTopBtn.classList.add('show');
+    } else {
+      backToTopBtn.classList.remove('show');
+    }
+  }
+  window.addEventListener('scroll', toggleBackToTop, { passive: true });
+  toggleBackToTop();
+  backToTopBtn.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+})();
+</script>
+
+</body>
+</html>
