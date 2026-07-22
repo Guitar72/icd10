@@ -531,7 +531,16 @@
       <span class="label">Mixer (phát nhiều âm cùng lúc)</span>
     </label>
   </div>
-  <div class="rm-group-title" style="border-top:1px dashed var(--border); margin-top:4px; padding-top:10px;">TÌM & NGHE NHẠC (YOUTUBE)</div>
+  <div class="rm-group-title" style="border-top:1px dashed var(--border); margin-top:4px; padding-top:10px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
+    <span style="display:flex; align-items:center; gap:6px; white-space:nowrap;">
+      <svg width="16" height="16" viewBox="0 0 24 24" style="flex-shrink:0;"><path fill="#FF0000" d="M23.5 6.2c-.3-1.1-1.1-1.9-2.2-2.2C19.4 3.5 12 3.5 12 3.5s-7.4 0-9.3.5c-1.1.3-1.9 1.1-2.2 2.2C0 8.1 0 12 0 12s0 3.9.5 5.8c.3 1.1 1.1 1.9 2.2 2.2 1.9.5 9.3.5 9.3.5s7.4 0 9.3-.5c1.1-.3 1.9-1.1 2.2-2.2.5-1.9.5-5.8.5-5.8s0-3.9-.5-5.8z"/><path fill="#fff" d="M9.6 15.5V8.5l6.4 3.5-6.4 3.5z"/></svg>
+      <span>NGHE NHẠC TRÊN YOUTUBE</span>
+    </span>
+    <span style="display:flex; align-items:center; gap:5px; text-transform:none; letter-spacing:normal; flex-shrink:0;">
+      <span style="font-size:12px;">🔊</span>
+      <input type="range" id="ytVolumeSlider" min="0" max="100" value="100" title="Âm lượng YouTube" style="width:64px; accent-color:var(--red); cursor:pointer;">
+    </span>
+  </div>
   <div style="padding: 4px 6px 8px;">
     <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
       <span id="ytApiKeyStatus" style="font-size:11px; color:var(--muted);"></span>
@@ -543,11 +552,18 @@
     </div>
     <div id="ytStatus" style="font-size:11.5px; color:var(--muted); margin-bottom:4px;"></div>
     <div id="ytResults" style="display:flex; flex-direction:column; gap:5px; max-height:260px; overflow-y:auto;"></div>
-    <div id="ytNowPlaying" style="display:none; margin-top:8px; padding:6px 8px; border-radius:8px; background:var(--green-light); color:var(--green); font-size:12px; align-items:center; justify-content:space-between; gap:6px;">
-      <span id="ytNowPlayingText" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
-      <button id="ytStopBtn" style="border:none; background:var(--red); color:#fff; border-radius:6px; padding:3px 8px; font-size:11px; cursor:pointer; flex-shrink:0;">Dừng</button>
+    <div id="ytNowPlaying" style="display:none; flex-direction:column; gap:8px; margin-top:8px; padding:8px 10px; border-radius:8px; background:var(--green-light); color:var(--green); font-size:12px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:6px;">
+        <span id="ytNowPlayingText" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;"></span>
+        <button id="ytStopBtn" style="border:none; background:var(--red); color:#fff; border-radius:6px; padding:3px 8px; font-size:11px; cursor:pointer; flex-shrink:0;">Dừng</button>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button id="ytPlayPauseBtn" title="Phát / Tạm dừng" style="border:none; background:var(--green); color:#08211d; width:26px; height:26px; border-radius:50%; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:11px; line-height:1;">▶</button>
+        <input type="range" id="ytSeekBar" min="0" max="100" value="0" step="0.1" style="flex:1; accent-color:var(--green); cursor:pointer;">
+        <span id="ytTimeLabel" title="Bấm để xem thời gian còn lại" style="font-size:11px; color:var(--green); cursor:pointer; white-space:nowrap; user-select:none; min-width:38px; text-align:right; flex-shrink:0;">0:00</span>
+      </div>
     </div>
-    <div id="ytPlayerHost" style="position:absolute; width:1px; height:1px; overflow:hidden;"></div>
+    <div id="ytPlayerHost" style="position:absolute; width:1px; height:1px; overflow:hidden; pointer-events:none;"></div>
   </div>
   <div class="rm-group-title" style="border-top:1px dashed var(--border); margin-top:4px; padding-top:10px;">RADIO TRỰC TUYẾN</div>
   <div id="radioTracks"></div>
@@ -1152,12 +1168,128 @@
   const ytNowPlayingText = document.getElementById('ytNowPlayingText');
   const ytStopBtn = document.getElementById('ytStopBtn');
   const ytPlayerHost = document.getElementById('ytPlayerHost');
+  const ytPlayPauseBtn = document.getElementById('ytPlayPauseBtn');
+  const ytSeekBar = document.getElementById('ytSeekBar');
+  const ytTimeLabel = document.getElementById('ytTimeLabel');
+  const ytVolumeSlider = document.getElementById('ytVolumeSlider');
 
   if (ytApiKeyStatus) ytApiKeyStatus.textContent = '';
 
   let ytPlayer = null; // instance YouTube IFrame Player
   let ytApiReady = false;
   let pendingVideoToPlay = null;
+  let ytUpdateTimer = null;
+  let ytIsSeeking = false;
+  let ytShowRemaining = false; // false = hiện thời gian đã chạy, true = hiện thời gian đếm lùi
+  let ytShouldBePlaying = false; // ý định của người dùng: có nên đang phát hay không
+  let ytUserPaused = false; // người dùng chủ động bấm Tạm dừng (khác với bị hệ điều hành tạm dừng khi chạy nền)
+
+  function formatYtTime(sec) {
+    sec = Math.max(0, Math.floor(sec || 0));
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  function updateYtTimeUI() {
+    if (!ytPlayer || !ytPlayer.getCurrentTime) return;
+    const cur = ytPlayer.getCurrentTime() || 0;
+    const dur = ytPlayer.getDuration() || 0;
+    if (!ytIsSeeking) {
+      ytSeekBar.max = dur || 0;
+      ytSeekBar.value = cur;
+    }
+    ytTimeLabel.textContent = ytShowRemaining
+      ? '-' + formatYtTime(dur - cur)
+      : formatYtTime(cur);
+  }
+
+  function startYtTimeUpdates() {
+    stopYtTimeUpdates();
+    ytUpdateTimer = setInterval(updateYtTimeUI, 500);
+  }
+  function stopYtTimeUpdates() {
+    if (ytUpdateTimer) { clearInterval(ytUpdateTimer); ytUpdateTimer = null; }
+  }
+
+  function setupYtMediaSession(title) {
+    if (!('mediaSession' in navigator)) return;
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: title || 'Đang phát nhạc',
+        artist: 'YouTube',
+        album: 'ICD 10 BY DHA',
+      });
+      navigator.mediaSession.setActionHandler('play', () => { if (ytPlayer) ytPlayer.playVideo(); });
+      navigator.mediaSession.setActionHandler('pause', () => { if (ytPlayer) ytPlayer.pauseVideo(); });
+      navigator.mediaSession.setActionHandler('stop', () => { ytStopBtn.click(); });
+      navigator.mediaSession.setActionHandler('seekto', (details) => {
+        if (ytPlayer && ytPlayer.seekTo && typeof details.seekTime === 'number') {
+          ytPlayer.seekTo(details.seekTime, true);
+        }
+      });
+    } catch (e) {}
+  }
+
+  function onYtPlayerStateChange(e) {
+    const state = e.data;
+    if (state === YT.PlayerState.PLAYING) {
+      ytPlayPauseBtn.textContent = '⏸';
+      ytShouldBePlaying = true;
+      startYtTimeUpdates();
+      updateYtTimeUI();
+      if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+    } else if (state === YT.PlayerState.PAUSED) {
+      ytPlayPauseBtn.textContent = '▶';
+      stopYtTimeUpdates();
+      if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+    } else if (state === YT.PlayerState.ENDED) {
+      ytPlayPauseBtn.textContent = '▶';
+      ytShouldBePlaying = false;
+      stopYtTimeUpdates();
+      ytSeekBar.value = 0;
+    }
+  }
+
+  // Khi quay lại tab/app sau khi chạy nền, nếu người dùng chưa chủ động tạm dừng
+  // mà YouTube bị hệ điều hành/tab tạm dừng thì tự phát lại để tránh gián đoạn.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible') return;
+    if (!ytShouldBePlaying || ytUserPaused || !ytPlayer || !ytPlayer.getPlayerState) return;
+    const st = ytPlayer.getPlayerState();
+    if (st !== YT.PlayerState.PLAYING && st !== YT.PlayerState.BUFFERING) {
+      ytPlayer.playVideo();
+    }
+  });
+
+  ytPlayPauseBtn.addEventListener('click', () => {
+    if (!ytPlayer || !ytPlayer.getPlayerState) return;
+    const st = ytPlayer.getPlayerState();
+    if (st === YT.PlayerState.PLAYING) {
+      ytUserPaused = true;
+      ytPlayer.pauseVideo();
+    } else {
+      ytUserPaused = false;
+      ytPlayer.playVideo();
+    }
+  });
+
+  ytSeekBar.addEventListener('input', () => { ytIsSeeking = true; });
+  ytSeekBar.addEventListener('change', () => {
+    if (ytPlayer && ytPlayer.seekTo) ytPlayer.seekTo(parseFloat(ytSeekBar.value), true);
+    ytIsSeeking = false;
+  });
+
+  ytTimeLabel.addEventListener('click', () => {
+    ytShowRemaining = !ytShowRemaining;
+    updateYtTimeUI();
+  });
+
+  if (ytVolumeSlider) {
+    ytVolumeSlider.addEventListener('input', () => {
+      if (ytPlayer && ytPlayer.setVolume) ytPlayer.setVolume(parseInt(ytVolumeSlider.value, 10));
+    });
+  }
 
   // Nạp YouTube IFrame API (chỉ 1 lần, khi cần dùng)
   function ensureYtIframeApi(cb) {
@@ -1184,17 +1316,41 @@
   function playYoutubeAudioOnly(videoId, title) {
     // Dừng các kênh radio/relax khác để tránh chồng âm thanh
     stopAll();
+    ytUserPaused = false;
+    ytShowRemaining = false;
+    setupYtMediaSession(title);
     ensureYtIframeApi(() => {
       if (ytPlayer) {
         ytPlayer.loadVideoById(videoId);
+        if (ytPlayer.setVolume && ytVolumeSlider) ytPlayer.setVolume(parseInt(ytVolumeSlider.value, 10));
       } else {
+        const playerVars = {
+          autoplay: 1,
+          controls: 0,
+          // playsinline: bắt buộc trên iOS để video phát ẩn/âm thanh không tự bật
+          // toàn màn hình — đây là nguyên nhân khiến app/PWA bị "văng" ra ngoài
+          // (thoát về trang chủ) khi phát nhạc trên điện thoại.
+          playsinline: 1,
+          rel: 0,
+          modestbranding: 1,
+          iv_load_policy: 3,
+          fs: 0,
+          disablekb: 1,
+        };
+        if (location.protocol === 'http:' || location.protocol === 'https:') {
+          playerVars.origin = location.origin;
+        }
         ytPlayer = new YT.Player(ytPlayerHost.id || (ytPlayerHost.id = 'ytPlayerHost'), {
           height: '1',
           width: '1',
           videoId: videoId,
-          playerVars: { autoplay: 1, controls: 0 },
+          playerVars: playerVars,
           events: {
-            onReady: (e) => { e.target.playVideo(); },
+            onReady: (e) => {
+              e.target.playVideo();
+              if (ytVolumeSlider) e.target.setVolume(parseInt(ytVolumeSlider.value, 10));
+            },
+            onStateChange: onYtPlayerStateChange,
           },
         });
       }
@@ -1206,6 +1362,13 @@
   ytStopBtn.addEventListener('click', () => {
     if (ytPlayer && ytPlayer.stopVideo) ytPlayer.stopVideo();
     ytNowPlaying.style.display = 'none';
+    ytShouldBePlaying = false;
+    ytUserPaused = false;
+    stopYtTimeUpdates();
+    ytSeekBar.value = 0;
+    ytTimeLabel.textContent = '0:00';
+    ytPlayPauseBtn.textContent = '▶';
+    if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
   });
 
   function renderYtResults(items) {
