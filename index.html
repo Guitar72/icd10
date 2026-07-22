@@ -533,8 +533,10 @@
   </div>
   <div class="rm-group-title" style="border-top:1px dashed var(--border); margin-top:4px; padding-top:10px;">TÌM & NGHE NHẠC (YOUTUBE)</div>
   <div style="padding: 4px 6px 8px;">
-    <input type="password" id="ytApiKeyInput" placeholder="Dán YouTube API key vào đây (chỉ 1 lần)"
-      style="width:100%; box-sizing:border-box; font-size:12px; padding:6px 8px; border-radius:6px; border:1px solid var(--border); background:var(--surface-2); color:var(--text); margin-bottom:6px;">
+    <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+      <button id="ytApiKeyBtn" style="flex-shrink:0; border:1px solid var(--border); background:var(--surface-2); color:var(--text); border-radius:6px; padding:6px 10px; font-size:12px; cursor:pointer;">🔑 Nhập API Key</button>
+      <span id="ytApiKeyStatus" style="font-size:11.5px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Chưa có key</span>
+    </div>
     <div style="display:flex; gap:6px; margin-bottom:6px;">
       <input type="text" id="ytSearchInput" placeholder="Tìm bài hát, ca sĩ..."
         style="flex:1; font-size:12.5px; padding:6px 8px; border-radius:6px; border:1px solid var(--border); background:var(--surface-2); color:var(--text);">
@@ -1131,7 +1133,8 @@
 
   // ===== Tìm & nghe nhạc YouTube (audio-only) =====
   const YT_KEY_STORAGE = 'ytApiKey';
-  const ytApiKeyInput = document.getElementById('ytApiKeyInput');
+  const ytApiKeyBtn = document.getElementById('ytApiKeyBtn');
+  const ytApiKeyStatus = document.getElementById('ytApiKeyStatus');
   const ytSearchInput = document.getElementById('ytSearchInput');
   const ytSearchBtn = document.getElementById('ytSearchBtn');
   const ytStatus = document.getElementById('ytStatus');
@@ -1141,11 +1144,30 @@
   const ytStopBtn = document.getElementById('ytStopBtn');
   const ytPlayerHost = document.getElementById('ytPlayerHost');
 
-  // Nạp key đã lưu trước đó (nếu có)
-  const savedYtKey = localStorage.getItem(YT_KEY_STORAGE);
-  if (savedYtKey) ytApiKeyInput.value = savedYtKey;
-  ytApiKeyInput.addEventListener('change', () => {
-    localStorage.setItem(YT_KEY_STORAGE, ytApiKeyInput.value.trim());
+  let ytApiKey = localStorage.getItem(YT_KEY_STORAGE) || '';
+
+  function refreshYtKeyStatus() {
+    if (ytApiKey) {
+      const masked = ytApiKey.length > 6
+        ? ytApiKey.slice(0, 4) + '••••' + ytApiKey.slice(-2)
+        : '••••';
+      ytApiKeyStatus.textContent = 'Đã lưu key: ' + masked;
+    } else {
+      ytApiKeyStatus.textContent = 'Chưa có key';
+    }
+  }
+  refreshYtKeyStatus();
+
+  ytApiKeyBtn.addEventListener('click', () => {
+    const input = window.prompt('Dán YouTube API key vào đây rồi bấm OK để lưu\n(để trống rồi OK sẽ xoá key đã lưu):', ytApiKey || '');
+    if (input === null) return; // bấm Cancel -> không đổi gì
+    ytApiKey = input.trim();
+    if (ytApiKey) {
+      localStorage.setItem(YT_KEY_STORAGE, ytApiKey);
+    } else {
+      localStorage.removeItem(YT_KEY_STORAGE);
+    }
+    refreshYtKeyStatus();
   });
 
   let ytPlayer = null; // instance YouTube IFrame Player
@@ -1226,7 +1248,7 @@
   }
 
   async function doYtSearch() {
-    const key = ytApiKeyInput.value.trim();
+    const key = ytApiKey.trim();
     const q = ytSearchInput.value.trim();
     if (!key) { ytStatus.textContent = 'Bạn cần dán API key trước.'; return; }
     if (!q) { ytStatus.textContent = 'Nhập từ khóa tìm kiếm.'; return; }
