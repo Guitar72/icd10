@@ -531,6 +531,23 @@
       <span class="label">Mixer (phát nhiều âm cùng lúc)</span>
     </label>
   </div>
+  <div class="rm-group-title" style="border-top:1px dashed var(--border); margin-top:4px; padding-top:10px;">TÌM & NGHE NHẠC (YOUTUBE)</div>
+  <div style="padding: 4px 6px 8px;">
+    <input type="password" id="ytApiKeyInput" placeholder="Dán YouTube API key vào đây (chỉ 1 lần)"
+      style="width:100%; box-sizing:border-box; font-size:12px; padding:6px 8px; border-radius:6px; border:1px solid var(--border); background:var(--surface-2); color:var(--text); margin-bottom:6px;">
+    <div style="display:flex; gap:6px; margin-bottom:6px;">
+      <input type="text" id="ytSearchInput" placeholder="Tìm bài hát, ca sĩ..."
+        style="flex:1; font-size:12.5px; padding:6px 8px; border-radius:6px; border:1px solid var(--border); background:var(--surface-2); color:var(--text);">
+      <button id="ytSearchBtn" style="border:none; background:var(--blue); color:#fff; border-radius:6px; padding:6px 12px; font-size:12.5px; cursor:pointer;">Tìm</button>
+    </div>
+    <div id="ytStatus" style="font-size:11.5px; color:var(--muted); margin-bottom:4px;"></div>
+    <div id="ytResults" style="display:flex; flex-direction:column; gap:5px; max-height:260px; overflow-y:auto;"></div>
+    <div id="ytNowPlaying" style="display:none; margin-top:8px; padding:6px 8px; border-radius:8px; background:var(--green-light); color:var(--green); font-size:12px; align-items:center; justify-content:space-between; gap:6px;">
+      <span id="ytNowPlayingText" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
+      <button id="ytStopBtn" style="border:none; background:var(--red); color:#fff; border-radius:6px; padding:3px 8px; font-size:11px; cursor:pointer; flex-shrink:0;">Dừng</button>
+    </div>
+    <div id="ytPlayerHost" style="position:absolute; width:1px; height:1px; overflow:hidden;"></div>
+  </div>
   <div class="rm-group-title" style="border-top:1px dashed var(--border); margin-top:4px; padding-top:10px;">RADIO TRỰC TUYẾN</div>
   <div id="radioTracks"></div>
   <div class="rm-group-title">ÂM THANH THƯ GIÃN</div>
@@ -1110,6 +1127,134 @@
       expandBtn.textContent = '▼';
       expandBtn.classList.remove('open');
     }
+  });
+
+  // ===== Tìm & nghe nhạc YouTube (audio-only) =====
+  const YT_KEY_STORAGE = 'ytApiKey';
+  const ytApiKeyInput = document.getElementById('ytApiKeyInput');
+  const ytSearchInput = document.getElementById('ytSearchInput');
+  const ytSearchBtn = document.getElementById('ytSearchBtn');
+  const ytStatus = document.getElementById('ytStatus');
+  const ytResults = document.getElementById('ytResults');
+  const ytNowPlaying = document.getElementById('ytNowPlaying');
+  const ytNowPlayingText = document.getElementById('ytNowPlayingText');
+  const ytStopBtn = document.getElementById('ytStopBtn');
+  const ytPlayerHost = document.getElementById('ytPlayerHost');
+
+  // Nạp key đã lưu trước đó (nếu có)
+  const savedYtKey = localStorage.getItem(YT_KEY_STORAGE);
+  if (savedYtKey) ytApiKeyInput.value = savedYtKey;
+  ytApiKeyInput.addEventListener('change', () => {
+    localStorage.setItem(YT_KEY_STORAGE, ytApiKeyInput.value.trim());
+  });
+
+  let ytPlayer = null; // instance YouTube IFrame Player
+  let ytApiReady = false;
+  let pendingVideoToPlay = null;
+
+  // Nạp YouTube IFrame API (chỉ 1 lần, khi cần dùng)
+  function ensureYtIframeApi(cb) {
+    if (window.YT && window.YT.Player) { ytApiReady = true; cb(); return; }
+    if (!document.getElementById('ytIframeApiScript')) {
+      const tag = document.createElement('script');
+      tag.id = 'ytIframeApiScript';
+      tag.src = 'https://www.youtube.com/iframe_api';
+      document.head.appendChild(tag);
+    }
+    window.onYouTubeIframeAPIReady = function () {
+      ytApiReady = true;
+      cb();
+    };
+    // Nếu script đã có sẵn nhưng chưa fire callback, chờ vòng lặp ngắn
+    const waitInterval = setInterval(() => {
+      if (window.YT && window.YT.Player) {
+        clearInterval(waitInterval);
+        if (!ytApiReady) { ytApiReady = true; cb(); }
+      }
+    }, 300);
+  }
+
+  function playYoutubeAudioOnly(videoId, title) {
+    // Dừng các kênh radio/relax khác để tránh chồng âm thanh
+    stopAll();
+    ensureYtIframeApi(() => {
+      if (ytPlayer) {
+        ytPlayer.loadVideoById(videoId);
+      } else {
+        ytPlayer = new YT.Player(ytPlayerHost.id || (ytPlayerHost.id = 'ytPlayerHost'), {
+          height: '1',
+          width: '1',
+          videoId: videoId,
+          playerVars: { autoplay: 1, controls: 0 },
+          events: {
+            onReady: (e) => { e.target.playVideo(); },
+          },
+        });
+      }
+      ytNowPlaying.style.display = 'flex';
+      ytNowPlayingText.textContent = '▶ ' + title;
+    });
+  }
+
+  ytStopBtn.addEventListener('click', () => {
+    if (ytPlayer && ytPlayer.stopVideo) ytPlayer.stopVideo();
+    ytNowPlaying.style.display = 'none';
+  });
+
+  function renderYtResults(items) {
+    ytResults.innerHTML = items.map((it) => {
+      const vid = it.id.videoId;
+      const title = it.snippet.title;
+      const channel = it.snippet.channelTitle;
+      const thumb = it.snippet.thumbnails && it.snippet.thumbnails.default ? it.snippet.thumbnails.default.url : '';
+      return `
+        <div data-vid="${vid}" data-title="${title.replace(/"/g, '&quot;')}"
+          style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:5px; border-radius:6px; background:var(--surface-2);">
+          <img src="${thumb}" alt="" style="width:44px; height:33px; border-radius:4px; object-fit:cover; flex-shrink:0;">
+          <div style="overflow:hidden;">
+            <div style="font-size:12px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${title}</div>
+            <div style="font-size:11px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${channel}</div>
+          </div>
+        </div>`;
+    }).join('');
+
+    ytResults.querySelectorAll('[data-vid]').forEach((row) => {
+      row.addEventListener('click', () => {
+        playYoutubeAudioOnly(row.dataset.vid, row.dataset.title);
+      });
+    });
+  }
+
+  async function doYtSearch() {
+    const key = ytApiKeyInput.value.trim();
+    const q = ytSearchInput.value.trim();
+    if (!key) { ytStatus.textContent = 'Bạn cần dán API key trước.'; return; }
+    if (!q) { ytStatus.textContent = 'Nhập từ khóa tìm kiếm.'; return; }
+    ytStatus.textContent = 'Đang tìm...';
+    ytResults.innerHTML = '';
+    try {
+      const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=10&q=${encodeURIComponent(q)}&key=${encodeURIComponent(key)}`;
+      const resp = await fetch(url);
+      const data = await resp.json();
+      if (data.error) {
+        ytStatus.textContent = 'Lỗi: ' + (data.error.message || 'không tìm được, kiểm tra lại API key.');
+        return;
+      }
+      const items = data.items || [];
+      if (items.length === 0) {
+        ytStatus.textContent = 'Không tìm thấy kết quả.';
+        return;
+      }
+      ytStatus.textContent = `Tìm thấy ${items.length} kết quả.`;
+      renderYtResults(items);
+    } catch (err) {
+      ytStatus.textContent = 'Có lỗi khi gọi API, kiểm tra kết nối mạng.';
+    }
+  }
+
+  ytSearchBtn.addEventListener('click', doYtSearch);
+  ytSearchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') doYtSearch();
   });
 })();
 </script>
