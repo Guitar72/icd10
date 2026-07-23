@@ -612,7 +612,9 @@
         <button id="ytStopBtn" style="border:none; background:var(--red); color:#fff; border-radius:6px; padding:3px 8px; font-size:11px; cursor:pointer; flex-shrink:0;">Dừng</button>
       </div>
       <div style="display:flex; align-items:center; gap:8px;">
+        <button id="ytPrevBtn" title="Bài trước" style="border:none; background:var(--surface-2); color:var(--green); width:20px; height:20px; border-radius:50%; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:9px; line-height:1;">⏮</button>
         <button id="ytPlayPauseBtn" title="Phát / Tạm dừng" style="border:none; background:var(--green); color:#08211d; width:26px; height:26px; border-radius:50%; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:11px; line-height:1;">▶</button>
+        <button id="ytNextBtn" title="Bài kế tiếp" style="border:none; background:var(--surface-2); color:var(--green); width:20px; height:20px; border-radius:50%; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:9px; line-height:1;">⏭</button>
         <input type="range" id="ytSeekBar" min="0" max="100" value="0" step="0.1" style="flex:1; accent-color:var(--green); cursor:pointer;">
         <span id="ytTimeLabel" title="Bấm để xem thời gian còn lại" style="font-size:11px; color:var(--green); cursor:pointer; white-space:nowrap; user-select:none; min-width:38px; text-align:right; flex-shrink:0;">0:00</span>
       </div>
@@ -1223,6 +1225,8 @@
   const ytStopBtn = document.getElementById('ytStopBtn');
   const ytPlayerHost = document.getElementById('ytPlayerHost');
   const ytPlayPauseBtn = document.getElementById('ytPlayPauseBtn');
+  const ytPrevBtn = document.getElementById('ytPrevBtn');
+  const ytNextBtn = document.getElementById('ytNextBtn');
   const ytSeekBar = document.getElementById('ytSeekBar');
   const ytTimeLabel = document.getElementById('ytTimeLabel');
   const ytVolumeSlider = document.getElementById('ytVolumeSlider');
@@ -1246,6 +1250,8 @@
   let ytVolumeBeforeMute = 100;
   let ytWatchdogTimer = null;    // giữ nhạc chạy nền: kiểm tra định kỳ, tự phát lại nếu bị hệ điều hành tạm dừng
   let ytWakeLock = null;         // Wake Lock: hạn chế màn hình tự khóa khi đang nghe nhạc
+  let ytPlaylist = [];           // danh sách bài hát hiện có trong kết quả tìm kiếm (theo đúng thứ tự hiển thị)
+  let ytPlaylistIndex = -1;      // vị trí bài đang phát trong ytPlaylist, dùng cho nút Trước/Sau + tự phát bài kế
 
   function escapeYtHtml(str) {
     return (str || '').replace(/[&<>"']/g, (c) => ({
@@ -1368,10 +1374,33 @@
       ytPlayPauseBtn.textContent = '▶';
       ytShouldBePlaying = false;
       stopYtTimeUpdates();
-      stopYtWatchdog();
-      releaseYtWakeLock();
       ytSeekBar.value = 0;
+      // Tự động phát bài tiếp theo trong danh sách kết quả (nếu có)
+      if (ytPlaylistIndex >= 0 && ytPlaylistIndex + 1 < ytPlaylist.length) {
+        const next = ytPlaylist[ytPlaylistIndex + 1];
+        playYoutubeAudioOnly(next.vid, next.title);
+      } else {
+        stopYtWatchdog();
+        releaseYtWakeLock();
+      }
     }
+  }
+
+  function playYtByIndex(index) {
+    if (index < 0 || index >= ytPlaylist.length) return;
+    const t = ytPlaylist[index];
+    playYoutubeAudioOnly(t.vid, t.title);
+  }
+
+  if (ytPrevBtn) {
+    ytPrevBtn.addEventListener('click', () => {
+      if (ytPlaylistIndex > 0) playYtByIndex(ytPlaylistIndex - 1);
+    });
+  }
+  if (ytNextBtn) {
+    ytNextBtn.addEventListener('click', () => {
+      if (ytPlaylistIndex >= 0 && ytPlaylistIndex + 1 < ytPlaylist.length) playYtByIndex(ytPlaylistIndex + 1);
+    });
   }
 
   // Khi quay lại tab/app sau khi chạy nền, nếu người dùng chưa chủ động tạm dừng
@@ -1489,6 +1518,8 @@
     ytUserPaused = false;
     ytShowRemaining = false;
     ytCurrentPlayingVid = videoId;
+    const idx = ytPlaylist.findIndex((t) => t.vid === videoId);
+    ytPlaylistIndex = idx;
     refreshYtPlayingHighlight();
     setupYtMediaSession(title);
     ensureYtIframeApi(() => {
@@ -1507,6 +1538,7 @@
           rel: 0,
           modestbranding: 1,
           iv_load_policy: 3,
+          cc_load_policy: 0,
           fs: 0,
           disablekb: 1,
         };
@@ -1613,8 +1645,10 @@
       const oldBtn = document.getElementById('ytLoadMoreBtn');
       if (oldBtn) oldBtn.remove();
       ytResults.insertAdjacentHTML('beforeend', html);
+      ytPlaylist = ytPlaylist.concat(items.map((it) => ({ vid: it.id.videoId, title: it.snippet.title })));
     } else {
       ytResults.innerHTML = html;
+      ytPlaylist = items.map((it) => ({ vid: it.id.videoId, title: it.snippet.title }));
     }
     attachYtRowHandlers(ytResults);
     renderYtLoadMoreButton();
