@@ -1260,10 +1260,15 @@
   }
 
   // Hiện chữ chạy trượt (marquee) khi tên bài dài hơn khung hiển thị, lặp vô hạn
+  let ytMarqueeTokenCounter = 0;
   function setMarqueeText(container, text) {
     if (!container) return;
+    const token = ++ytMarqueeTokenCounter;
+    container.dataset.marqueeToken = String(token);
     container.innerHTML = `<span class="marquee-track"><span class="marquee-copy">${escapeYtHtml(text)}</span></span>`;
     requestAnimationFrame(() => {
+      // Nếu trong lúc chờ đo kích thước, ô này đã bị đổi nội dung khác (đổi bài, hết marquee...) thì bỏ qua
+      if (container.dataset.marqueeToken !== String(token)) return;
       const track = container.querySelector('.marquee-track');
       const copy = container.querySelector('.marquee-copy');
       if (!track || !copy) return;
@@ -1601,20 +1606,22 @@
 
   // Bật/tắt chữ chạy trượt cho tiêu đề bài trong danh sách tùy theo có đang phát hay không
   function applyRowTitleDisplay(row, isPlaying) {
-    const titleEl = row.querySelector('.yt-row-title');
+    const titleEl = row.querySelector('.yt-row-title, .yt-row-title-marquee');
     if (!titleEl) return;
     const title = row.dataset.title || '';
     if (isPlaying) {
-      titleEl.classList.remove('yt-row-title');
-      titleEl.classList.add('yt-row-title-marquee', 'marquee-container');
-      titleEl.style.textOverflow = '';
+      // Vô hiệu marquee cũ (nếu có) đang chờ đo kích thước, rồi thiết lập lại từ đầu
+      delete titleEl.dataset.marqueeToken;
+      titleEl.className = 'yt-row-title-marquee marquee-container';
+      titleEl.removeAttribute('style');
+      titleEl.style.cssText = 'font-size:12px; font-weight:600; color:var(--text);';
       setMarqueeText(titleEl, title);
     } else {
-      titleEl.classList.remove('yt-row-title-marquee', 'marquee-container');
-      titleEl.classList.add('yt-row-title');
-      titleEl.style.whiteSpace = 'nowrap';
-      titleEl.style.overflow = 'hidden';
-      titleEl.style.textOverflow = 'ellipsis';
+      // Vô hiệu token marquee đang chờ để callback cũ (nếu có) không ghi đè lại nội dung này
+      delete titleEl.dataset.marqueeToken;
+      titleEl.className = 'yt-row-title';
+      titleEl.removeAttribute('style');
+      titleEl.style.cssText = 'font-size:12px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;';
       titleEl.textContent = title;
     }
   }
