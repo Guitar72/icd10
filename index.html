@@ -546,6 +546,24 @@
   }
   #ytLoadMoreBtn:hover { background: #2b3646; }
   #ytLoadMoreBtn:disabled { opacity: 0.6; cursor: default; }
+
+  .marquee-container { position: relative; overflow: hidden; }
+  .marquee-track {
+    display: inline-flex;
+    white-space: nowrap;
+    width: max-content;
+  }
+  .marquee-track.animate {
+    animation: marquee-scroll linear infinite;
+  }
+  .marquee-track .marquee-copy {
+    padding-right: 32px;
+  }
+  @keyframes marquee-scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+  #ytMuteBtn.muted { color: var(--red); }
 </style>
 </head>
 <body>
@@ -570,7 +588,7 @@
       <span>NGHE NHẠC TRÊN YOUTUBE</span>
     </span>
     <span style="display:flex; align-items:center; gap:5px; text-transform:none; letter-spacing:normal; flex-shrink:0;">
-      <span style="font-size:12px;">🔊</span>
+      <button id="ytMuteBtn" title="Tắt/Bật tiếng" style="border:none; background:none; color:var(--text); font-size:14px; cursor:pointer; padding:2px; line-height:1;">🔊</button>
       <input type="range" id="ytVolumeSlider" min="0" max="100" value="100" title="Âm lượng YouTube" style="width:64px; accent-color:var(--red); cursor:pointer;">
     </span>
   </div>
@@ -578,16 +596,19 @@
     <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
       <span id="ytApiKeyStatus" style="font-size:11px; color:var(--muted);"></span>
     </div>
-    <div style="display:flex; gap:6px; margin-bottom:6px;">
-      <input type="text" id="ytSearchInput" placeholder="Tìm bài hát, ca sĩ..."
-        style="flex:1; font-size:12.5px; padding:6px 8px; border-radius:6px; border:1px solid var(--border); background:var(--surface-2); color:var(--text);">
+    <div style="display:flex; gap:6px; margin-bottom:6px; position:relative;">
+      <div style="flex:1; position:relative; display:flex; align-items:center;">
+        <input type="text" id="ytSearchInput" placeholder="Tìm bài hát, ca sĩ..."
+          style="width:100%; font-size:12.5px; padding:6px 26px 6px 8px; border-radius:6px; border:1px solid var(--border); background:var(--surface-2); color:var(--text);">
+        <button id="ytSearchClearBtn" title="Xóa từ khóa" style="display:none; position:absolute; right:4px; border:none; background:none; color:var(--muted); font-size:14px; cursor:pointer; padding:2px 4px; line-height:1;">✕</button>
+      </div>
       <button id="ytSearchBtn" style="border:none; background:var(--blue); color:#fff; border-radius:6px; padding:6px 12px; font-size:12.5px; cursor:pointer;">Tìm</button>
     </div>
     <div id="ytStatus" style="font-size:11.5px; color:var(--muted); margin-bottom:4px;"></div>
     <div id="ytResults" style="display:flex; flex-direction:column; gap:5px; max-height:260px; overflow-y:auto;"></div>
     <div id="ytNowPlaying" style="display:none; flex-direction:column; gap:8px; margin-top:8px; padding:8px 10px; border-radius:8px; background:var(--green-light); color:var(--green); font-size:12px;">
       <div style="display:flex; align-items:center; justify-content:space-between; gap:6px;">
-        <span id="ytNowPlayingText" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;"></span>
+        <span id="ytNowPlayingText" class="marquee-container" style="overflow:hidden; white-space:nowrap; flex:1;"></span>
         <button id="ytStopBtn" style="border:none; background:var(--red); color:#fff; border-radius:6px; padding:3px 8px; font-size:11px; cursor:pointer; flex-shrink:0;">Dừng</button>
       </div>
       <div style="display:flex; align-items:center; gap:8px;">
@@ -1205,6 +1226,8 @@
   const ytSeekBar = document.getElementById('ytSeekBar');
   const ytTimeLabel = document.getElementById('ytTimeLabel');
   const ytVolumeSlider = document.getElementById('ytVolumeSlider');
+  const ytMuteBtn = document.getElementById('ytMuteBtn');
+  const ytSearchClearBtn = document.getElementById('ytSearchClearBtn');
 
   if (ytApiKeyStatus) ytApiKeyStatus.textContent = '';
 
@@ -1219,6 +1242,37 @@
   let ytCurrentPlayingVid = null; // videoId đang phát, dùng để đánh dấu "Đang phát" trong danh sách
   let ytCurrentQuery = '';       // từ khóa đang tìm, dùng cho "Xem thêm"
   let ytNextPageToken = '';      // pageToken cho trang kết quả tiếp theo
+  let ytIsMuted = false;
+  let ytVolumeBeforeMute = 100;
+  let ytWatchdogTimer = null;    // giữ nhạc chạy nền: kiểm tra định kỳ, tự phát lại nếu bị hệ điều hành tạm dừng
+  let ytWakeLock = null;         // Wake Lock: hạn chế màn hình tự khóa khi đang nghe nhạc
+
+  function escapeYtHtml(str) {
+    return (str || '').replace(/[&<>"']/g, (c) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    }[c]));
+  }
+
+  // Hiện chữ chạy trượt (marquee) khi tên bài dài hơn khung hiển thị, lặp vô hạn
+  function setMarqueeText(container, text) {
+    if (!container) return;
+    container.innerHTML = `<span class="marquee-track"><span class="marquee-copy">${escapeYtHtml(text)}</span></span>`;
+    requestAnimationFrame(() => {
+      const track = container.querySelector('.marquee-track');
+      const copy = container.querySelector('.marquee-copy');
+      if (!track || !copy) return;
+      if (copy.scrollWidth > container.clientWidth) {
+        track.innerHTML =
+          `<span class="marquee-copy">${escapeYtHtml(text)}</span>` +
+          `<span class="marquee-copy">${escapeYtHtml(text)}</span>`;
+        const dur = Math.max(6, copy.scrollWidth / 40); // ~40px/giây
+        track.style.animationDuration = dur + 's';
+        track.classList.add('animate');
+      } else {
+        track.classList.remove('animate');
+      }
+    });
+  }
 
   function formatYtTime(sec) {
     sec = Math.max(0, Math.floor(sec || 0));
@@ -1248,6 +1302,35 @@
     if (ytUpdateTimer) { clearInterval(ytUpdateTimer); ytUpdateTimer = null; }
   }
 
+  // ----- Giữ phát nhạc chạy nền (khi khóa màn hình / chuyển app khác) -----
+  async function requestYtWakeLock() {
+    try {
+      if ('wakeLock' in navigator) {
+        ytWakeLock = await navigator.wakeLock.request('screen');
+        ytWakeLock.addEventListener('release', () => { ytWakeLock = null; });
+      }
+    } catch (e) { /* một số trình duyệt/điều kiện không hỗ trợ, bỏ qua */ }
+  }
+  function releaseYtWakeLock() {
+    if (ytWakeLock) { try { ytWakeLock.release(); } catch (e) {} ytWakeLock = null; }
+  }
+
+  // Theo dõi định kỳ: nếu nhạc đang bật ý định phát mà bị hệ điều hành/trình duyệt
+  // tự tạm dừng khi chạy nền (khóa màn hình, chuyển app khác...) thì tự phát lại ngay.
+  function startYtWatchdog() {
+    stopYtWatchdog();
+    ytWatchdogTimer = setInterval(() => {
+      if (!ytShouldBePlaying || ytUserPaused || !ytPlayer || !ytPlayer.getPlayerState) return;
+      const st = ytPlayer.getPlayerState();
+      if (st !== YT.PlayerState.PLAYING && st !== YT.PlayerState.BUFFERING) {
+        try { ytPlayer.playVideo(); } catch (e) {}
+      }
+    }, 3000);
+  }
+  function stopYtWatchdog() {
+    if (ytWatchdogTimer) { clearInterval(ytWatchdogTimer); ytWatchdogTimer = null; }
+  }
+
   function setupYtMediaSession(title) {
     if (!('mediaSession' in navigator)) return;
     try {
@@ -1274,6 +1357,8 @@
       ytShouldBePlaying = true;
       startYtTimeUpdates();
       updateYtTimeUI();
+      startYtWatchdog();
+      requestYtWakeLock();
       if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
     } else if (state === YT.PlayerState.PAUSED) {
       ytPlayPauseBtn.textContent = '▶';
@@ -1283,14 +1368,18 @@
       ytPlayPauseBtn.textContent = '▶';
       ytShouldBePlaying = false;
       stopYtTimeUpdates();
+      stopYtWatchdog();
+      releaseYtWakeLock();
       ytSeekBar.value = 0;
     }
   }
 
   // Khi quay lại tab/app sau khi chạy nền, nếu người dùng chưa chủ động tạm dừng
   // mà YouTube bị hệ điều hành/tab tạm dừng thì tự phát lại để tránh gián đoạn.
+  // Wake Lock tự động bị hủy khi ẩn trang nên cần xin cấp lại khi quay lại.
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState !== 'visible') return;
+    if (ytShouldBePlaying && !ytUserPaused) requestYtWakeLock();
     if (!ytShouldBePlaying || ytUserPaused || !ytPlayer || !ytPlayer.getPlayerState) return;
     const st = ytPlayer.getPlayerState();
     if (st !== YT.PlayerState.PLAYING && st !== YT.PlayerState.BUFFERING) {
@@ -1304,9 +1393,11 @@
     if (st === YT.PlayerState.PLAYING) {
       ytUserPaused = true;
       ytPlayer.pauseVideo();
+      releaseYtWakeLock();
     } else {
       ytUserPaused = false;
       ytPlayer.playVideo();
+      requestYtWakeLock();
     }
   });
 
@@ -1323,7 +1414,50 @@
 
   if (ytVolumeSlider) {
     ytVolumeSlider.addEventListener('input', () => {
-      if (ytPlayer && ytPlayer.setVolume) ytPlayer.setVolume(parseInt(ytVolumeSlider.value, 10));
+      const vol = parseInt(ytVolumeSlider.value, 10);
+      if (ytPlayer && ytPlayer.setVolume) ytPlayer.setVolume(vol);
+      // Người dùng tự kéo âm lượng nghĩa là muốn nghe -> tự bỏ trạng thái Mute
+      if (ytIsMuted && vol > 0) {
+        ytIsMuted = false;
+        if (ytPlayer && ytPlayer.unMute) ytPlayer.unMute();
+        if (ytMuteBtn) { ytMuteBtn.textContent = '🔊'; ytMuteBtn.classList.remove('muted'); }
+      }
+    });
+  }
+
+  // Bấm icon loa: Tắt tiếng / Bật lại âm lượng trước đó
+  if (ytMuteBtn) {
+    ytMuteBtn.addEventListener('click', () => {
+      ytIsMuted = !ytIsMuted;
+      if (ytIsMuted) {
+        ytVolumeBeforeMute = parseInt(ytVolumeSlider.value, 10) || 100;
+        if (ytPlayer && ytPlayer.mute) ytPlayer.mute();
+        ytMuteBtn.textContent = '🔇';
+        ytMuteBtn.classList.add('muted');
+      } else {
+        if (ytPlayer && ytPlayer.unMute) ytPlayer.unMute();
+        const restoreVol = ytVolumeBeforeMute || 100;
+        if (ytPlayer && ytPlayer.setVolume) ytPlayer.setVolume(restoreVol);
+        ytVolumeSlider.value = restoreVol;
+        ytMuteBtn.textContent = '🔊';
+        ytMuteBtn.classList.remove('muted');
+      }
+    });
+  }
+
+  // Nút "x" xóa từ khóa tìm kiếm YouTube
+  if (ytSearchClearBtn) {
+    ytSearchClearBtn.addEventListener('click', () => {
+      ytSearchInput.value = '';
+      ytSearchClearBtn.style.display = 'none';
+      ytResults.innerHTML = '';
+      ytStatus.textContent = '';
+      ytCurrentQuery = '';
+      ytNextPageToken = '';
+      ytSearchInput.focus();
+    });
+    ytSearchInput.addEventListener('input', () => {
+      ytSearchClearBtn.style.display = ytSearchInput.value ? 'block' : 'none';
     });
   }
 
@@ -1361,6 +1495,7 @@
       if (ytPlayer) {
         ytPlayer.loadVideoById(videoId);
         if (ytPlayer.setVolume && ytVolumeSlider) ytPlayer.setVolume(parseInt(ytVolumeSlider.value, 10));
+        if (ytIsMuted && ytPlayer.mute) ytPlayer.mute();
       } else {
         const playerVars = {
           autoplay: 1,
@@ -1387,13 +1522,14 @@
             onReady: (e) => {
               e.target.playVideo();
               if (ytVolumeSlider) e.target.setVolume(parseInt(ytVolumeSlider.value, 10));
+              if (ytIsMuted && e.target.mute) e.target.mute();
             },
             onStateChange: onYtPlayerStateChange,
           },
         });
       }
       ytNowPlaying.style.display = 'flex';
-      ytNowPlayingText.textContent = '▶ ' + title;
+      setMarqueeText(ytNowPlayingText, '▶ ' + title);
     });
   }
 
@@ -1403,6 +1539,8 @@
     ytShouldBePlaying = false;
     ytUserPaused = false;
     stopYtTimeUpdates();
+    stopYtWatchdog();
+    releaseYtWakeLock();
     ytSeekBar.value = 0;
     ytTimeLabel.textContent = '0:00';
     ytPlayPauseBtn.textContent = '▶';
@@ -1421,12 +1559,32 @@
       <div class="yt-result-row${isPlaying ? ' yt-playing' : ''}" data-vid="${vid}" data-title="${title.replace(/"/g, '&quot;')}"
         style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:5px; border-radius:6px; background:var(--surface-2);">
         <img src="${thumb}" alt="" style="width:44px; height:33px; border-radius:4px; object-fit:cover; flex-shrink:0;">
-        <div style="overflow:hidden; flex:1;">
-          <div style="font-size:12px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${title}</div>
-          <div style="font-size:11px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${channel}</div>
+        <div style="overflow:hidden; flex:1; min-width:0;">
+          <div class="yt-row-title" style="font-size:12px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeYtHtml(title)}</div>
+          <div style="font-size:11px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeYtHtml(channel)}</div>
           <div class="yt-playing-badge">▶ Đang phát</div>
         </div>
       </div>`;
+  }
+
+  // Bật/tắt chữ chạy trượt cho tiêu đề bài trong danh sách tùy theo có đang phát hay không
+  function applyRowTitleDisplay(row, isPlaying) {
+    const titleEl = row.querySelector('.yt-row-title');
+    if (!titleEl) return;
+    const title = row.dataset.title || '';
+    if (isPlaying) {
+      titleEl.classList.remove('yt-row-title');
+      titleEl.classList.add('yt-row-title-marquee', 'marquee-container');
+      titleEl.style.textOverflow = '';
+      setMarqueeText(titleEl, title);
+    } else {
+      titleEl.classList.remove('yt-row-title-marquee', 'marquee-container');
+      titleEl.classList.add('yt-row-title');
+      titleEl.style.whiteSpace = 'nowrap';
+      titleEl.style.overflow = 'hidden';
+      titleEl.style.textOverflow = 'ellipsis';
+      titleEl.textContent = title;
+    }
   }
 
   function attachYtRowHandlers(container) {
@@ -1434,6 +1592,7 @@
       row.addEventListener('click', () => {
         playYoutubeAudioOnly(row.dataset.vid, row.dataset.title);
       });
+      applyRowTitleDisplay(row, row.classList.contains('yt-playing'));
     });
   }
 
@@ -1464,7 +1623,9 @@
   // Cập nhật lại dấu "Đang phát" trên các mục đã hiển thị mà không cần tải lại danh sách
   function refreshYtPlayingHighlight() {
     ytResults.querySelectorAll('.yt-result-row').forEach((row) => {
-      row.classList.toggle('yt-playing', row.dataset.vid === ytCurrentPlayingVid);
+      const isPlaying = row.dataset.vid === ytCurrentPlayingVid;
+      row.classList.toggle('yt-playing', isPlaying);
+      applyRowTitleDisplay(row, isPlaying);
     });
   }
 
